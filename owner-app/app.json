@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Souqly Owner",
+    "slug": "souqly-owner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF6B35"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.souqly.owner"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FF6B35"
+      },
+      "package": "app.souqly.owner",
+      "googleServicesFile": "./google-services.json"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "color": "#FF6B35"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Souqly to access your photos to upload product images.",
+          "cameraPermission": "Allow Souqly to use your camera to take product photos."
+        }
+      ]
+    ]
+  }
+}

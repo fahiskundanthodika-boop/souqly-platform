@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #FF6B35;
+  --primary-dark: #E55A25;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: #f8f9fa;
+  color: #1a1a2e;
+}
+
+/* Souqly button style */
+.btn-primary {
+  @apply bg-primary text-white px-6 py-3 rounded-xl font-semibold
+         hover:bg-primary-600 transition-all duration-200
+         active:scale-95 shadow-lg shadow-primary/30;
+}
+
+.btn-outline {
+  @apply border-2 border-primary text-primary px-6 py-3 rounded-xl
+         font-semibold hover:bg-primary hover:text-white transition-all duration-200;
+}
+
+/* Card style */
+.card {
+  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+}
