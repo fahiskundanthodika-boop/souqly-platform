@@ -79,13 +79,16 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting - max 100 requests per minute per IP
+// Rate limiting - max 100 requests per minute per IP (exclude webhook — Meta sends bursts)
 const limiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 100,
   message: { success: false, message: 'Too many requests. Please slow down.' }
 });
-app.use('/api/', limiter);
+app.use('/api/', (req, res, next) => {
+  if (req.path.startsWith('/webhook/')) return next();
+  return limiter(req, res, next);
+});
 
 // ========== ROUTES ==========
 app.use('/api/auth', require('./routes/auth.routes'));
@@ -102,6 +105,11 @@ app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/coupons', require('./routes/coupon.routes'));
 app.use('/api/reviews', require('./routes/review.routes'));
 app.use('/api/subscription', require('./routes/subscription.routes'));
+app.use('/api/invoices', require('./routes/invoice.routes'));
+app.use('/api/reports', require('./routes/reports.routes'));
+app.use('/api/webhook', require('./routes/webhook.routes'));
+app.use('/api/wa-connect', require('./routes/wa_connect.routes'));
+app.use('/api/banners',   require('./routes/banner.routes'));
 
 // Health check route (test if API is running)
 app.get('/api/health', (req, res) => {
