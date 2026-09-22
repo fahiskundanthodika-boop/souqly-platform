@@ -216,14 +216,42 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* Sticky Checkout Button */}
+      {/* Sticky Checkout Buttons */}
       {cartItems.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 space-y-2">
+
+          {/* WhatsApp Order Button */}
+          {shop?.whatsappNumber && (
+            <a
+              href={(() => {
+                const num = shop.whatsappNumber.replace(/\D/g, '');
+                const lines = [
+                  `Hi ${shop.name}! I'd like to place an order:`,
+                  '',
+                  ...cartItems.map(i => `• ${i.name} x${i.qty} — ₹${i.itemTotal}`),
+                  '',
+                  `Subtotal: ₹${subtotal}`,
+                  deliveryCharge > 0 ? `Delivery: ₹${deliveryCharge}` : `Delivery: FREE`,
+                  `*Total: ₹${total}*`,
+                  '',
+                  `Please confirm my order. Thank you!`
+                ];
+                return `https://wa.me/${num}?text=${encodeURIComponent(lines.join('\n'))}`;
+              })()}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-white font-bold text-sm"
+              style={{ backgroundColor: '#25D366' }}>
+              💬 Order via WhatsApp
+            </a>
+          )}
+
+          {/* Regular Checkout */}
           <Link href={`/store/${shopSlug}/checkout`}>
             <div className="flex items-center justify-between px-6 py-4 rounded-2xl text-white font-bold shadow-lg"
               style={{ backgroundColor: primary }}>
               <span className="text-sm">{cartItems.reduce((a, b) => a + b.qty, 0)} items</span>
-              <span>Proceed to Checkout →</span>
+              <span>Checkout Online →</span>
               <span className="text-sm">₹{total}</span>
             </div>
           </Link>

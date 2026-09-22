@@ -1,52 +1,47 @@
-// WhatsApp routes - Meta WhatsApp Business API webhook
+// WhatsApp routes - Meta WhatsApp Business API
 const express = require('express');
-const router = express.Router();
+const router  = express.Router();
+const { protect: verifyToken } = require('../middleware/auth.middleware');
 const whatsappService = require('../services/whatsapp.service');
+const { sendAbandonedCartReminders } = require('../services/wabot.service');
+const WaSession = require('../models/WaSession');
 
-// GET /api/whatsapp/webhook - Meta verification (one-time setup)
-router.get('/webhook', (req, res) => {
-  const mode = req.query['hub.mode'];
-  const token = req.query['hub.verify_token'];
-  const challenge = req.query['hub.challenge'];
-
-  if (mode === 'subscribe' && token === process.env.META_VERIFY_TOKEN) {
-    console.log('✅ WhatsApp Webhook verified!');
-    res.status(200).send(challenge);
-  } else {
-    res.status(403).json({ message: 'Verification failed.' });
-  }
-});
-
-// POST /api/whatsapp/webhook - Receive incoming WhatsApp messages
-router.post('/webhook', async (req, res) => {
+// POST /api/whatsapp/send - Send a WhatsApp message (shop owner)
+router.post('/send', verifyToken, async (req, res) => {
   try {
-    const body = req.body;
-
-    if (body.object === 'whatsapp_business_account') {
-      const entry = body.entry?.[0];
-      const changes = entry?.changes?.[0];
-      const messages = changes?.value?.messages;
-
-      if (messages && messages.length > 0) {
-        const message = messages[0];
-        console.log('📩 WhatsApp message received:', message.text?.body);
-        // TODO: Process order from WhatsApp chat
-      }
-    }
-
-    res.sendStatus(200); // Must respond 200 quickly or Meta will retry
-  } catch (err) {
-    console.error('WhatsApp webhook error:', err);
-    res.sendStatus(200);
-  }
-});
-
-// POST /api/whatsapp/send - Send a WhatsApp message
-router.post('/send', async (req, res) => {
-  try {
-    const { to, message, templateName, templateParams } = req.body;
+    const { to, message } = req.body;
     const result = await whatsappService.sendMessage(to, message);
     res.json({ success: true, result });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/whatsapp/sessions - Active bot sessions for this shop
+router.get('/sessions', verifyToken, async (req, res) => {
+  try {
+    const sessions = await WaSession.find({
+      shopId: req.shop._id,
+      expiresAt: { $gt: new Date() }
+    })
+      .sort({ updatedAt: -1 })
+      .limit(50)
+      .lean();
+    res.json({ success: true, sessions });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/whatsapp/abandoned-reminders - Trigger abandoned cart reminders (cron)
+router.post('/abandoned-reminders', async (req, res) => {
+  // Simple secret check so it can be triggered by a cron service
+  if (req.headers['x-cron-secret'] !== process.env.CRON_SECRET) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+  try {
+    const count = await sendAbandonedCartReminders();
+    res.json({ success: true, reminders_sent: count });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

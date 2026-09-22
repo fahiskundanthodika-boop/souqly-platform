@@ -1,5 +1,6 @@
 // Settings page - shop configuration
 'use client';
+import Sidebar from '../../../components/Sidebar';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '../../../lib/api';
@@ -32,7 +33,7 @@ export default function SettingsPage() {
   if (loading || !shop) return <div className="p-12 text-center text-gray-400">Loading settings...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex" style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
       <nav className="bg-white border-b px-6 py-4 flex items-center gap-3">
         <Link href="/dashboard" className="text-gray-400 hover:text-primary">← Dashboard</Link>
         <span className="text-gray-300">/</span>
@@ -217,6 +218,7 @@ export default function SettingsPage() {
 
         </form>
       </div>
+        </div>
     </div>
   );
 }

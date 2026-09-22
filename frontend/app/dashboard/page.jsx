@@ -1,171 +1,183 @@
-﻿'use client';
+'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { TrendingUp, ShoppingBag, Clock, Users, Copy, Check, ExternalLink, Package, ArrowRight } from 'lucide-react';
+import Sidebar from '../../components/Sidebar';
 import { API_URL } from '../../lib/config';
+
+const STATUS = {
+  new:              { bg: 'rgba(59,130,246,0.1)',  text: '#60a5fa', border: 'rgba(59,130,246,0.2)' },
+  confirmed:        { bg: 'rgba(245,158,11,0.1)',  text: '#fbbf24', border: 'rgba(245,158,11,0.2)' },
+  packing:          { bg: 'rgba(249,115,22,0.1)',  text: '#fb923c', border: 'rgba(249,115,22,0.2)' },
+  out_for_delivery: { bg: 'rgba(168,85,247,0.1)',  text: '#c084fc', border: 'rgba(168,85,247,0.2)' },
+  delivered:        { bg: 'rgba(34,197,94,0.1)',   text: '#4ade80', border: 'rgba(34,197,94,0.2)'  },
+  cancelled:        { bg: 'rgba(239,68,68,0.1)',   text: '#f87171', border: 'rgba(239,68,68,0.2)'  },
+};
+
+const QUICK = [
+  { href: '/dashboard/products', label: 'Add Products',   desc: 'Upload or add items to your store',  color: '#3b82f6' },
+  { href: '/dashboard/whatsapp', label: 'Setup WhatsApp', desc: 'Connect WhatsApp for order alerts',  color: '#22c55e' },
+  { href: '/dashboard/settings', label: 'Shop Settings',  desc: 'Update logo, hours, and info',       color: '#a855f7' },
+];
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [shop, setShop] = useState(null);
-  const [stats, setStats] = useState({ todayOrders: 0, todayRevenue: 0, pendingOrders: 0, totalCustomers: 0 });
+  const [shop,         setShop]         = useState(null);
+  const [stats,        setStats]        = useState({ todayOrders: 0, todayRevenue: 0, pendingOrders: 0, totalCustomers: 0 });
   const [recentOrders, setRecentOrders] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading,      setLoading]      = useState(true);
+  const [copied,       setCopied]       = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      const t = p.get('token');
+      if (t) { localStorage.setItem('ownerToken', t); window.history.replaceState({}, '', '/dashboard'); }
+    }
     const shopData = localStorage.getItem('souqly_shop');
-    if (!shopData) { router.push('/login'); return; }
+    const token    = localStorage.getItem('ownerToken');
+    if (!shopData || !token) { router.push('/login'); return; }
     setShop(JSON.parse(shopData));
 
-    // Load stats
-    fetch(`${API_URL}/analytics/summary`, {
-      credentials: 'include'
-    })
-      .then(r => r.json())
-      .then(d => { if (d.success) setStats(d.data); })
-      .catch(() => {});
-
-    // Load recent orders
-    fetch(`${API_URL}/orders?limit=5`, {
-      credentials: 'include'
-    })
-      .then(r => r.json())
-      .then(d => { if (d.success) setRecentOrders(d.orders); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-
-    // Safety fallback - stop loading after 3 seconds no matter what
-    setTimeout(() => setLoading(false), 3000);
+    const h = { Authorization: `Bearer ${token}` };
+    Promise.all([
+      fetch(`${API_URL}/analytics/summary`, { headers: h }).then(r => r.json()).catch(() => ({})),
+      fetch(`${API_URL}/orders?limit=5`,    { headers: h }).then(r => r.json()).catch(() => ({})),
+    ]).then(([s, o]) => {
+      if (s.success) setStats(s.data);
+      if (o.success) setRecentOrders(o.orders || []);
+    }).finally(() => setLoading(false));
   }, []);
 
-  const logout = async () => {
-    await fetch(`${API_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
-    localStorage.clear();
-    router.push('/login');
-  };
-
-  const statusColors = {
-    new: 'bg-blue-100 text-blue-700',
-    confirmed: 'bg-yellow-100 text-yellow-700',
-    packing: 'bg-orange-100 text-orange-700',
-    out_for_delivery: 'bg-purple-100 text-purple-700',
-    delivered: 'bg-green-100 text-green-700',
-    cancelled: 'bg-red-100 text-red-700',
+  const copyLink = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/store/${shop?.slug}`).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-        <p className="text-gray-500 text-sm">Loading dashboard...</p>
+    <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid #1f1f1f', borderTopColor: '#FF6B35', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
+        <p style={{ color: '#606060', fontSize: 13 }}>Loading dashboard...</p>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
+  const STATS = [
+    { label: "Today's Orders",   value: stats.todayOrders,                                    icon: ShoppingBag, color: '#3b82f6', bg: 'rgba(59,130,246,0.1)'  },
+    { label: "Today's Revenue",  value: `₹${(stats.todayRevenue||0).toLocaleString()}`,  icon: TrendingUp,  color: '#22c55e', bg: 'rgba(34,197,94,0.1)'   },
+    { label: 'Pending Orders',   value: stats.pendingOrders,                                  icon: Clock,       color: '#f59e0b', bg: 'rgba(245,158,11,0.1)'  },
+    { label: 'Total Customers',  value: stats.totalCustomers,                                 icon: Users,       color: '#a855f7', bg: 'rgba(168,85,247,0.1)'  },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', fontFamily: "'Inter', sans-serif" }}>
+      <Sidebar />
 
-      {/* Sidebar */}
-      <aside className="w-56 bg-white border-r border-gray-100 min-h-screen p-4 flex flex-col">
-        <div className="flex items-center gap-2 mb-8 px-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
-          </div>
-          <span className="font-bold text-gray-900 text-sm truncate">{shop?.name}</span>
-        </div>
-
-        <nav className="space-y-1 flex-1">
-          {[
-            { href: '/dashboard', label: 'Dashboard', icon: 'ðŸ“Š' },
-            { href: '/dashboard/orders', label: 'Orders', icon: 'ðŸ“¦' },
-            { href: '/dashboard/products', label: 'Products', icon: 'ðŸ›ï¸' },
-            { href: '/dashboard/riders', label: 'Riders', icon: 'ðŸ›µ' },
-            { href: '/dashboard/analytics', label: 'Analytics', icon: 'ðŸ“ˆ' },
-            { href: '/dashboard/coupons', label: 'Coupons', icon: 'ðŸŽŸï¸' },
-            { href: '/dashboard/reviews', label: 'Reviews', icon: 'â­' },
-            { href: '/dashboard/marketing', label: 'Marketing', icon: 'ðŸ“£' },
-            { href: '/dashboard/settings', label: 'Settings', icon: 'âš™ï¸' },
-          ].map(item => (
-            <Link key={item.href} href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-orange-50 hover:text-orange-500 transition-colors">
-              <span>{item.icon}</span>{item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors mt-4">
-          ðŸšª Logout
-        </button>
-      </aside>
-
-      {/* Main */}
-      <main className="flex-1 p-6">
+      <main style={{ flex: 1, padding: '28px 32px', overflowY: 'auto' }}>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-400 text-sm">{shop?.name} Â· {shop?.plan?.toUpperCase()} Plan</p>
+            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>Dashboard</h1>
+            <p style={{ fontSize: 13, color: '#606060', marginTop: 3 }}>Welcome back, {shop?.ownerName || shop?.name}</p>
           </div>
-          <Link href={`/store/${shop?.slug}`} target="_blank"
-            className="text-sm text-orange-500 hover:underline border border-orange-200 px-3 py-1.5 rounded-lg">
-            View Store â†’
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={copyLink} className="btn-ghost" style={{ fontSize: 13, padding: '9px 16px' }}>
+              {copied
+                ? <><Check size={14} style={{ color: '#22c55e' }} /> Copied!</>
+                : <><Copy size={14} /> Copy Store Link</>
+              }
+            </button>
+            {shop?.slug && (
+              <Link href={`/store/${shop.slug}`} target="_blank" className="btn-primary" style={{ fontSize: 13, padding: '9px 16px' }}>
+                <ExternalLink size={14} /> View Store
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {[
-            { label: "Today's Orders", value: stats.todayOrders, icon: 'ðŸ“¦', color: 'bg-blue-50 text-blue-600' },
-            { label: "Today's Revenue", value: `â‚¹${stats.todayRevenue}`, icon: 'ðŸ’°', color: 'bg-green-50 text-green-600' },
-            { label: 'Pending', value: stats.pendingOrders, icon: 'â³', color: 'bg-orange-50 text-orange-600' },
-            { label: 'Customers', value: stats.totalCustomers, icon: 'ðŸ‘¥', color: 'bg-purple-50 text-purple-600' },
-          ].map((card, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3 ${card.color}`}>
-                {card.icon}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 24 }}>
+          {STATS.map(({ label, value, icon: Icon, color, bg }) => (
+            <div key={label} className="stat-card">
+              <div style={{ width: 38, height: 38, background: bg, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <Icon size={18} style={{ color }} />
               </div>
-              <div className="text-2xl font-bold text-gray-900">{card.value}</div>
-              <div className="text-xs text-gray-400 mt-1">{card.label}</div>
+              <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', letterSpacing: '-0.5px' }}>{value}</div>
+              <div style={{ fontSize: 12, color: '#606060', marginTop: 4, fontWeight: 500 }}>{label}</div>
             </div>
           ))}
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-gray-900">Recent Orders</h2>
-            <Link href="/dashboard/orders" className="text-orange-500 text-sm hover:underline">View all â†’</Link>
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>Recent Orders</h2>
+            <Link href="/dashboard/orders" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#FF6B35', fontWeight: 600 }}>
+              View all <ArrowRight size={12} />
+            </Link>
           </div>
+
           {recentOrders.length === 0 ? (
-            <div className="text-center py-10">
-              <div className="text-4xl mb-3">ðŸ“¦</div>
-              <p className="text-gray-400 text-sm mb-4">No orders yet.</p>
-              <button
-                onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/store/${shop?.slug}`); alert('Store link copied!'); }}
-                className="bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-medium">
-                Copy Your Store Link
+            <div style={{ textAlign: 'center', padding: '48px 0' }}>
+              <div style={{ width: 52, height: 52, background: '#161616', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <Package size={24} style={{ color: '#3a3a3a' }} />
+              </div>
+              <p style={{ color: '#606060', fontSize: 14, fontWeight: 600, marginBottom: 4 }}>No orders yet</p>
+              <p style={{ color: '#3a3a3a', fontSize: 12, marginBottom: 20 }}>Share your store link to start receiving orders</p>
+              <button onClick={copyLink} className="btn-primary" style={{ fontSize: 13, padding: '9px 18px' }}>
+                <Copy size={14} /> Copy Store Link
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {recentOrders.map(order => (
-                <div key={order._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                  <div>
-                    <div className="font-medium text-sm text-gray-900">#{order.orderId} Â· {order.customerName}</div>
-                    <div className="text-xs text-gray-400">{order.items?.length} items Â· â‚¹{order.total}</div>
+            <div>
+              {recentOrders.map(order => {
+                const s = STATUS[order.orderStatus] || { bg: 'rgba(96,96,96,0.1)', text: '#606060', border: 'rgba(96,96,96,0.2)' };
+                return (
+                  <div key={order._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0', borderBottom: '1px solid #1f1f1f' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>#{order.orderId}</span>
+                        <span style={{ fontSize: 13, color: '#a0a0a0' }}>{order.customerName}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#606060', marginTop: 3 }}>
+                        {order.items?.length} item{order.items?.length !== 1 ? 's' : ''} &middot; &#8377;{order.total?.toLocaleString()}
+                      </div>
+                    </div>
+                    <span style={{ background: s.bg, color: s.text, border: `1px solid ${s.border}`, borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 700 }}>
+                      {order.orderStatus?.replace(/_/g, ' ')}
+                    </span>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[order.orderStatus] || 'bg-gray-100 text-gray-600'}`}>
-                    {order.orderStatus?.replace(/_/g, ' ')}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
+        {/* Quick actions */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+          {QUICK.map(({ href, label, desc, color }) => (
+            <Link key={href} href={href} style={{ display: 'flex', alignItems: 'center', gap: 14, background: '#0f0f0f', border: '1px solid #1f1f1f', borderRadius: 14, padding: '18px 20px', textDecoration: 'none', transition: 'border-color 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#2a2a2a'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#1f1f1f'; }}
+            >
+              <div style={{ width: 36, height: 36, background: `${color}18`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <ArrowRight size={16} style={{ color }} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: '#fff' }}>{label}</div>
+                <div style={{ fontSize: 12, color: '#606060', marginTop: 2 }}>{desc}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
       </main>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
-
-

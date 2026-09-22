@@ -2,35 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 :root {
-  --primary: #FF6B35;
-  --primary-dark: #E55A25;
+  --bg:       #080808;
+  --surface:  #0f0f0f;
+  --surface2: #161616;
+  --border:   #1f1f1f;
+  --orange:   #FF6B35;
+  --white:    #ffffff;
+  --grey1:    #a0a0a0;
+  --grey2:    #606060;
+  --primary:  #FF6B35;
 }
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
+
+html { scroll-behavior: smooth; }
+a    { text-decoration: none; color: inherit; }
 
 body {
-  background: #f8f9fa;
-  color: #1a1a2e;
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Souqly button style */
+/* ── Shared input style ─────────────────────────────────────────── */
+.inp {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.inp::placeholder { color: var(--grey2); }
+.inp:focus        { border-color: #3a3a3a; }
+
+/* ── Shared button styles ───────────────────────────────────────── */
 .btn-primary {
-  @apply bg-primary text-white px-6 py-3 rounded-xl font-semibold
-         hover:bg-primary-600 transition-all duration-200
-         active:scale-95 shadow-lg shadow-primary/30;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--orange); color: #fff;
+  padding: 11px 20px; border-radius: 10px;
+  font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
+  border: none; cursor: pointer; transition: all 0.2s;
 }
-
-.btn-outline {
-  @apply border-2 border-primary text-primary px-6 py-3 rounded-xl
-         font-semibold hover:bg-primary hover:text-white transition-all duration-200;
+.btn-primary:hover {
+  background: #ff7a45;
+  box-shadow: 0 8px 32px rgba(255,107,53,0.4);
+  transform: translateY(-1px);
 }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
-/* Card style */
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; color: var(--grey1);
+  padding: 11px 20px; border-radius: 10px;
+  font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif;
+  border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: #3a3a3a; color: var(--white); }
+.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Dashboard card ─────────────────────────────────────────────── */
 .card {
-  @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+/* ── Stat card ──────────────────────────────────────────────────── */
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: #2a2a2a; }
+
+/* ── Table ──────────────────────────────────────────────────────── */
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th {
+  text-align: left; font-size: 11px; font-weight: 600;
+  color: var(--grey2); text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+}
+.tbl td {
+  padding: 14px 16px; font-size: 13px; color: var(--grey1);
+  border-bottom: 1px solid var(--border);
+}
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: var(--surface2); }
+
+/* ── Badge ──────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 700;
 }

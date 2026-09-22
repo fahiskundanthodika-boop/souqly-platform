@@ -1,224 +1,188 @@
-﻿'use client';
+'use client';
 import { API_URL } from '../../lib/config';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+const CATEGORIES = [
+  { value: 'grocery',     label: 'Grocery' },
+  { value: 'supermarket', label: 'Supermarket' },
+  { value: 'restaurant',  label: 'Restaurant' },
+  { value: 'bakery',      label: 'Bakery' },
+  { value: 'pharmacy',    label: 'Pharmacy' },
+  { value: 'other',       label: 'Other' },
+];
+
+const PERKS = [
+  'Free to start — no credit card needed',
+  'WhatsApp order notifications',
+  'GST invoices auto-generated',
+  'Rider delivery tracking',
+];
+
 export default function SignupPage() {
-  const router = useRouter();
+  const router  = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [form, setForm] = useState({
+  const [error,   setError]   = useState('');
+  const [form,    setForm]    = useState({
     name: '', ownerName: '', email: '', password: '',
-    phone: '', city: '', category: 'grocery', country: 'India'
+    phone: '', city: '', category: 'grocery', country: 'India',
   });
 
   const set = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    e.preventDefault(); setError(''); setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // send/receive cookies
+      const res  = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || 'Signup failed. Please try again.');
-        return;
-      }
-
-      // Save shop info to localStorage for quick access
-      localStorage.setItem('souqly_shop', JSON.stringify(data.shop));
+      if (!res.ok) { setError(data.message || 'Signup failed. Please try again.'); return; }
+      localStorage.setItem('ownerToken',   data.token);
+      localStorage.setItem('souqly_token', data.token);
+      localStorage.setItem('souqly_shop',  JSON.stringify(data.shop));
       router.push('/dashboard');
-    } catch (err) {
-      setError('Cannot connect to server. Make sure the backend is running.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError('Cannot connect to server. Please try again.'); }
+    finally { setLoading(false); }
   };
 
-  const categories = [
-    { value: 'grocery', label: 'ðŸ›’ Grocery' },
-    { value: 'supermarket', label: 'ðŸª Supermarket' },
-    { value: 'restaurant', label: 'ðŸ½ï¸ Restaurant' },
-    { value: 'bakery', label: 'ðŸ¥– Bakery' },
-    { value: 'pharmacy', label: 'ðŸ’Š Pharmacy' },
-    { value: 'other', label: 'ðŸ¬ Other' },
-  ];
+  const labelStyle = { display: 'block', fontSize: 13, fontWeight: 500, color: '#a0a0a0', marginBottom: 8 };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex">
+    <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', fontFamily: "'Inter', sans-serif" }}>
 
-      {/* Left side - branding (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary flex-col justify-center px-16 text-white">
-        <div className="mb-8">
-          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-6">
-            <span className="text-3xl font-bold">S</span>
-          </div>
-          <h1 className="text-4xl font-bold mb-4">Start selling online in 5 minutes</h1>
-          <p className="text-white/80 text-lg leading-relaxed">
-            Join thousands of shop owners across India and GCC who use Souqly
-            to manage orders, riders, and customers â€” all in one place.
-          </p>
-        </div>
-        <div className="space-y-4">
-          {['Free to start â€” no credit card needed', 'WhatsApp order notifications', 'GST invoices auto-generated', 'Rider delivery tracking'].map((f, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-sm">âœ“</div>
-              <span className="text-white/90">{f}</span>
+      {/* Left — branding */}
+      <div style={{ display: 'none', width: '42%', background: '#0a0a0a', borderRight: '1px solid #1f1f1f', flexDirection: 'column', justifyContent: 'center', padding: '60px 56px', position: 'relative', overflow: 'hidden' }}
+           className="signup-left">
+        {/* Glow */}
+        <div style={{ position: 'absolute', top: '30%', left: '20%', width: 400, height: 300, background: 'radial-gradient(ellipse, rgba(255,107,53,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 48 }}>
+            <div style={{ width: 34, height: 34, background: '#FF6B35', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(255,107,53,0.4)' }}>
+              <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>S</span>
             </div>
-          ))}
+            <span style={{ fontWeight: 800, fontSize: 17, color: '#fff' }}>Souqly</span>
+          </div>
+          <h1 style={{ fontSize: 36, fontWeight: 900, letterSpacing: '-1.5px', lineHeight: 1.1, color: '#fff', marginBottom: 16 }}>
+            Start selling online<br />in 5 minutes
+          </h1>
+          <p style={{ fontSize: 15, color: '#606060', lineHeight: 1.7, marginBottom: 40 }}>
+            Join thousands of shop owners across India and GCC who use Souqly to manage orders, riders, and customers.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {PERKS.map((perk, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 20, height: 20, background: 'rgba(255,107,53,0.12)', border: '1px solid rgba(255,107,53,0.3)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#FF6B35" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </div>
+                <span style={{ fontSize: 13, color: '#a0a0a0' }}>{perk}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Right side - form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-md">
-
+      {/* Right — form */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '48px 24px', overflowY: 'auto',
+        backgroundImage: 'linear-gradient(rgba(255,107,53,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,53,0.025) 1px,transparent 1px)',
+        backgroundSize: '60px 60px',
+      }}>
+        <div style={{ width: '100%', maxWidth: 480 }}>
           {/* Mobile logo */}
-          <div className="lg:hidden text-center mb-8">
-            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
-              <span className="text-white font-bold text-xl">S</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 32 }}>
+            <Link href="/">
+              <div style={{ width: 32, height: 32, background: '#FF6B35', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 16px rgba(255,107,53,0.35)' }}>
+                <span style={{ color: '#fff', fontWeight: 900, fontSize: 14 }}>S</span>
+              </div>
+            </Link>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>Create your store</h2>
+              <p style={{ fontSize: 12, color: '#606060' }}>Free forever. Upgrade when you grow.</p>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Create your store</h1>
           </div>
 
-          <div className="lg:block hidden mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Create your store</h2>
-            <p className="text-gray-500 mt-1">Free forever. Upgrade when you grow.</p>
-          </div>
-
-          {/* Error message */}
+          {/* Error */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm flex items-start gap-2">
-              <span className="mt-0.5">âš ï¸</span>
-              <span>{error}</span>
+            <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Shop Name *</label>
-                <input
-                  value={form.name} onChange={set('name')}
-                  placeholder="e.g. Fresh Mart, Star Bakery"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                  required
-                />
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Shop Name *</label>
+                <input value={form.name} onChange={set('name')} placeholder="e.g. Fresh Mart, Star Bakery" className="inp" required />
               </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Your Name *</label>
-                <input
-                  value={form.ownerName} onChange={set('ownerName')}
-                  placeholder="Owner's full name"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                  required
-                />
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Your Name *</label>
+                <input value={form.ownerName} onChange={set('ownerName')} placeholder="Owner's full name" className="inp" required />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone *</label>
-                <input
-                  value={form.phone} onChange={set('phone')}
-                  placeholder="+91 98765 43210"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                  required
-                />
+                <label style={labelStyle}>Phone *</label>
+                <input value={form.phone} onChange={set('phone')} placeholder="+91 98765 43210" className="inp" required />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">City *</label>
-                <input
-                  value={form.city} onChange={set('city')}
-                  placeholder="e.g. Kochi, Dubai"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                  required
-                />
+                <label style={labelStyle}>City *</label>
+                <input value={form.city} onChange={set('city')} placeholder="e.g. Kochi, Dubai" className="inp" required />
               </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Business Type *</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {categories.map(cat => (
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Business Type *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                  {CATEGORIES.map(cat => (
                     <button
-                      key={cat.value}
-                      type="button"
+                      key={cat.value} type="button"
                       onClick={() => setForm({ ...form, category: cat.value })}
-                      className={`px-3 py-2.5 rounded-xl text-xs font-medium border-2 transition-all ${
-                        form.category === cat.value
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                      }`}
+                      style={{
+                        padding: '10px 8px', borderRadius: 9, fontSize: 13, fontWeight: 500,
+                        cursor: 'pointer', fontFamily: "'Inter', sans-serif", transition: 'all 0.15s',
+                        background: form.category === cat.value ? 'rgba(255,107,53,0.12)' : '#0f0f0f',
+                        border: form.category === cat.value ? '1px solid rgba(255,107,53,0.4)' : '1px solid #1f1f1f',
+                        color: form.category === cat.value ? '#FF6B35' : '#606060',
+                      }}
                     >
                       {cat.label}
                     </button>
                   ))}
                 </div>
               </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
-                <input
-                  type="email" value={form.email} onChange={set('email')}
-                  placeholder="you@example.com"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                  required
-                />
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Email *</label>
+                <input type="email" value={form.email} onChange={set('email')} placeholder="you@example.com" className="inp" required />
               </div>
-
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Password *</label>
-                <input
-                  type="password" value={form.password} onChange={set('password')}
-                  placeholder="At least 6 characters"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                  required minLength={6}
-                />
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={labelStyle}>Password *</label>
+                <input type="password" value={form.password} onChange={set('password')} placeholder="At least 6 characters" className="inp" required minLength={6} />
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-orange-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed mt-2"
-            >
+            <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', padding: '13px 20px', fontSize: 14, marginTop: 4 }}>
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                  </svg>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <svg style={{ animation: 'spin 1s linear infinite' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
                   Creating your store...
                 </span>
-              ) : 'Create Free Store â†’'}
+              ) : 'Create Free Store →'}
             </button>
-
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-5">
+          <p style={{ textAlign: 'center', fontSize: 13, color: '#606060', marginTop: 20 }}>
             Already have an account?{' '}
-            <Link href="/login" className="text-primary font-semibold hover:underline">Sign in</Link>
+            <Link href="/login" style={{ color: '#FF6B35', fontWeight: 600 }}>Sign in</Link>
           </p>
-
-          <p className="text-center text-xs text-gray-400 mt-4">
-            By signing up you agree to our Terms of Service.<br/>
-            FaizeCart Online Services OPC Pvt Ltd Â· GSTIN: 32AAFCF7417G1ZU
+          <p style={{ textAlign: 'center', fontSize: 11, color: '#3a3a3a', marginTop: 12 }}>
+            FaizeCart Online Services OPC Pvt. Ltd. &middot; GSTIN: 32AAFCF7417G1ZU
           </p>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (min-width: 900px) { .signup-left { display: flex !important; } }
+      `}</style>
     </div>
   );
 }
-
-

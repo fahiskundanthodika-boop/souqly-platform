@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 
 import { API_URL as API } from '../../../lib/config';
+import { getThemeColors } from '../../../lib/themes';
 
 // ── Skeleton loader shown while products are loading ──────────────
 function SkeletonCard() {
@@ -32,6 +33,26 @@ function SkeletonHeader() {
   );
 }
 
+function useCountdown(endDate, endTime) {
+  const [remaining, setRemaining] = useState('');
+  useEffect(() => {
+    if (!endDate) return;
+    const target = new Date(`${endDate}T${endTime || '23:59'}`);
+    const tick = () => {
+      const diff = target - Date.now();
+      if (diff <= 0) { setRemaining('Ended'); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setRemaining(`${h}h ${m}m ${s}s`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [endDate, endTime]);
+  return remaining;
+}
+
 export default function StorePage() {
   const { shopSlug } = useParams();
   const [shop, setShop] = useState(null);
@@ -43,6 +64,9 @@ export default function StorePage() {
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [notFound, setNotFound] = useState(false);
+  const [banners, setBanners] = useState([]);
+  const [heroIdx, setHeroIdx] = useState(0);
+  const [themeData, setThemeData] = useState(null);
 
   // Load cart from localStorage
   useEffect(() => {
@@ -58,7 +82,7 @@ export default function StorePage() {
     localStorage.setItem(`cart_${shopSlug}`, JSON.stringify(newCart));
   }, [shopSlug]);
 
-  // Fetch shop details
+  // Fetch shop details + banners
   useEffect(() => {
     fetch(`${API}/shop/public/${shopSlug}`)
       .then(r => r.json())
@@ -68,7 +92,27 @@ export default function StorePage() {
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoadingShop(false));
+
+    fetch(`${API}/banners/store/${shopSlug}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setBanners(d.banners); })
+      .catch(() => {});
+
+    fetch(`${API}/theme/store/${shopSlug}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setThemeData(d.theme); })
+      .catch(() => {});
   }, [shopSlug]);
+
+  // Hero auto-advance
+  const heroBanners = banners.filter(b => b.type === 'hero');
+  const miniBanners = banners.filter(b => b.type === 'mini');
+  const flashBanner = banners.find(b => b.type === 'flash');
+  useEffect(() => {
+    if (heroBanners.length <= 1) return;
+    const id = setInterval(() => setHeroIdx(i => (i + 1) % heroBanners.length), 4000);
+    return () => clearInterval(id);
+  }, [heroBanners.length]);
 
   // Fetch products once shop is loaded
   useEffect(() => {
@@ -109,7 +153,10 @@ export default function StorePage() {
 
   const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
   const cartTotal = products.reduce((sum, p) => sum + ((cart[p._id] || 0) * p.price), 0);
-  const primary = shop?.primaryColor || '#FF6B35';
+
+  // Resolve theme: DB theme → themeColors overrides → fallback to primaryColor
+  const T = getThemeColors(themeData?.theme || 'classic-white', themeData?.themeColors || {});
+  const primary = T.primary || shop?.primaryColor || '#FF6B35';
 
   // ── Not found ──────────────────────────────────────────────────
   if (notFound) return (
@@ -121,7 +168,7 @@ export default function StorePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: T.background, color: T.text }}>
 
       {/* ── HEADER ──────────────────────────────────────────────── */}
       <header style={{ backgroundColor: primary }} className="sticky top-0 z-30 shadow-sm">
@@ -178,6 +225,47 @@ export default function StorePage() {
           </div>
         )}
       </header>
+
+      {/* ── FLASH SALE STRIP ───────────────────────────────────── */}
+      {flashBanner && <FlashStrip banner={flashBanner} />}
+
+      {/* ── HERO SLIDER ─────────────────────────────────────────── */}
+      {heroBanners.length > 0 && (
+        <div style={{ position: 'relative', overflow: 'hidden', margin: '0 0 0 0' }}>
+          <div style={{ background: heroBanners[heroIdx]?.background, padding: '20px 16px', minHeight: 120, position: 'relative', overflow: 'hidden', transition: 'background 0.4s' }}>
+            <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 52, opacity: 0.18 }}>{heroBanners[heroIdx]?.emoji}</div>
+            {heroBanners[heroIdx]?.tag && (
+              <span style={{ display: 'inline-block', background: heroBanners[heroIdx].tagColor, color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 10px', borderRadius: 20, marginBottom: 6 }}>{heroBanners[heroIdx].tag}</span>
+            )}
+            <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 4 }}>{heroBanners[heroIdx]?.title}</div>
+            {heroBanners[heroIdx]?.subtitle && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>{heroBanners[heroIdx].subtitle}</div>}
+            <button style={{ marginTop: 12, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, padding: '7px 16px', fontSize: 12, fontWeight: 600 }}
+              onClick={() => { if (heroBanners[heroIdx]?.linkTo && heroBanners[heroIdx].linkTo !== 'all') {} }}>
+              {heroBanners[heroIdx]?.buttonText}
+            </button>
+          </div>
+          {heroBanners.length > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 5, padding: '8px 0', background: '#fff' }}>
+              {heroBanners.map((_, i) => (
+                <button key={i} onClick={() => setHeroIdx(i)} style={{ width: i === heroIdx ? 18 : 6, height: 6, borderRadius: 3, background: i === heroIdx ? (shop?.primaryColor || '#FF6B35') : '#ddd', border: 'none', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── MINI BANNERS ────────────────────────────────────────── */}
+      {miniBanners.length > 0 && (
+        <div style={{ display: 'flex', gap: 10, padding: '10px 12px', overflowX: 'auto', background: '#fff', borderBottom: '1px solid #f3f4f6' }}>
+          {miniBanners.map(b => (
+            <div key={b._id} style={{ flexShrink: 0, width: 150, background: b.background, borderRadius: 10, padding: '12px 12px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', right: 6, bottom: 6, fontSize: 24, opacity: 0.2 }}>{b.emoji}</div>
+              {b.tag && <span style={{ display: 'inline-block', background: b.tagColor, color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 7px', borderRadius: 20, marginBottom: 4 }}>{b.tag}</span>}
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{b.title}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── DELIVERY INFO BANNER ────────────────────────────────── */}
       {shop && (
@@ -269,6 +357,29 @@ export default function StorePage() {
         </div>
       )}
 
+    </div>
+  );
+}
+
+// ── Flash Sale Strip ───────────────────────────────────────────────
+function FlashStrip({ banner }) {
+  const remaining = useCountdown(
+    banner.flashEndDate ? banner.flashEndDate.slice(0, 10) : null,
+    banner.flashEndTime
+  );
+  if (!remaining || remaining === 'Ended') return null;
+  return (
+    <div style={{ background: banner.background || 'linear-gradient(90deg,#7c3aed,#db2777)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 16 }}>{banner.emoji}</span>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{banner.title}</div>
+          {banner.subtitle && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)' }}>{banner.subtitle}</div>}
+        </div>
+      </div>
+      <div style={{ background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>
+        ⏱ {remaining}
+      </div>
     </div>
   );
 }

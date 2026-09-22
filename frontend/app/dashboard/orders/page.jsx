@@ -1,5 +1,6 @@
-﻿'use client';
+'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
+import Sidebar from '../../../components/Sidebar';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
@@ -22,20 +23,20 @@ const STATUS_COLORS = {
   cancelled:        { bg: '#fee2e2', text: '#b91c1c', dot: '#ef4444' }
 };
 const PAYMENT_LABELS = {
-  cod: 'ðŸ’µ Cash',
-  card_on_delivery: 'ðŸ’³ Card',
-  pickup: 'ðŸª Pickup',
-  bank_transfer: 'ðŸ¦ Bank',
-  online: 'ðŸŒ Online'
+  cod: ' Cash',
+  card_on_delivery: ' Card',
+  pickup: ' Pickup',
+  bank_transfer: ' Bank',
+  online: ' Online'
 };
 const CHANNEL_LABELS = {
-  website: 'ðŸŒ Web',
-  whatsapp: 'ðŸ’¬ WhatsApp',
-  pos: 'ðŸ–¥ï¸ POS',
-  manual: 'âœï¸ Manual'
+  website: ' Web',
+  whatsapp: ' WhatsApp',
+  pos: ' POS',
+  manual: ' Manual'
 };
 
-// â”€â”€ Web Audio ping: 3 beeps 880â†’1100â†’880 Hz â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// "" Web Audio ping: 3 beeps 8801100880 Hz """"""""""""""""""""""
 function playPing() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -67,7 +68,7 @@ function timeAgo(date) {
   return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
-// â”€â”€ Reject reason modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// "" Reject reason modal """""""""""""""""""""""""""""""""""""""""""
 function RejectModal({ order, onClose, onConfirm }) {
   const reasons = ['Out of stock', 'Shop closed', 'Delivery not available', 'Customer request', 'Other'];
   const [reason, setReason] = useState('');
@@ -105,11 +106,27 @@ function RejectModal({ order, onClose, onConfirm }) {
   );
 }
 
-// â”€â”€ Single Order Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// "" Single Order Card """""""""""""""""""""""""""""""""""""""""""""
 function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
   const [expanded, setExpanded] = useState(isNew);
   const [assigning, setAssigning] = useState(false);
   const [showReject, setShowReject] = useState(false);
+  const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [invoiceUrl, setInvoiceUrl] = useState(order.invoiceUrl || null);
+
+  async function generateInvoice() {
+    setInvoiceLoading(true);
+    const token = localStorage.getItem('ownerToken');
+    try {
+      const r = await fetch(`${API}/invoices/generate/${order._id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const d = await r.json();
+      if (d.success) { setInvoiceUrl(d.invoice.pdfUrl); window.open(d.invoice.pdfUrl, '_blank'); }
+      else alert(d.message);
+    } finally { setInvoiceLoading(false); }
+  }
   const sc = STATUS_COLORS[order.orderStatus] || STATUS_COLORS.new;
 
   const mapsLink = order.customerLocation?.lat
@@ -117,7 +134,7 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
     : `https://maps.google.com/?q=${encodeURIComponent(order.customerAddress || '')}`;
 
   const whatsappLink = order.customerPhone
-    ? `https://wa.me/${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hi ${order.customerName}, your order #${order.orderId} has been received! Total: â‚¹${order.total}`)}`
+    ? `https://wa.me/${order.customerPhone.replace(/\D/g, '')}?text=${encodeURIComponent('Hi ' + order.customerName + ', your order #' + order.orderId + ' has been received! Total: Rs.' + order.total)}`
     : null;
 
   return (
@@ -132,7 +149,7 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
       <div className={`bg-white rounded-2xl border-2 overflow-hidden transition-all duration-500 ${isNew ? 'new-order-flash' : 'border-gray-100'}`}
         style={isNew ? { borderColor: '#FF6B35' } : {}}>
 
-        {/* Header â€” always visible, click to expand */}
+        {/* Header " always visible, click to expand */}
         <div className="p-4 cursor-pointer select-none" onClick={() => setExpanded(e => !e)}>
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -145,7 +162,7 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
                 </span>
                 {isNew && (
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-600 animate-pulse">
-                    NEW âœ¨
+                    NEW 
                   </span>
                 )}
               </div>
@@ -153,9 +170,9 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
               <div className="text-gray-400 text-sm">{order.customerPhone}</div>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="font-bold text-gray-900 text-base">â‚¹{order.total}</div>
+              <div className="font-bold text-gray-900 text-base">{order.total}</div>
               <div className="text-xs text-gray-400 mt-0.5">{timeAgo(order.createdAt)}</div>
-              <div className="text-gray-400 text-sm mt-1">{expanded ? 'â–²' : 'â–¼'}</div>
+              <div className="text-gray-400 text-sm mt-1">{expanded ? '' : ''}</div>
             </div>
           </div>
           <div className="flex gap-2 mt-2 flex-wrap">
@@ -178,13 +195,13 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
             {/* Address + Maps */}
             {order.customerAddress && (
               <div className="flex items-start gap-2 pt-3">
-                <span className="text-lg flex-shrink-0 mt-0.5">ðŸ“</span>
+                <span className="text-lg flex-shrink-0 mt-0.5">"</span>
                 <div className="flex-1">
                   <div className="text-sm text-gray-700 leading-snug">{order.customerAddress}</div>
                   <a href={mapsLink} target="_blank" rel="noreferrer"
                     className="text-xs font-semibold mt-1 inline-block"
                     style={{ color: '#FF6B35' }}>
-                    Open in Google Maps â†’
+                    Open in Google Maps 
                   </a>
                 </div>
               </div>
@@ -199,12 +216,12 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
                     <div className="w-8 h-8 bg-gray-50 rounded-lg overflow-hidden flex-shrink-0">
                       {item.image
                         ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-sm">ðŸ›ï¸</div>
+                        : <div className="w-full h-full flex items-center justify-center text-sm"></div>
                       }
                     </div>
                     <div className="flex-1 text-sm text-gray-800 truncate">{item.name}</div>
-                    <div className="text-xs text-gray-400 flex-shrink-0">Ã—{item.qty}</div>
-                    <div className="text-sm font-bold text-gray-900 flex-shrink-0 w-14 text-right">â‚¹{item.total}</div>
+                    <div className="text-xs text-gray-400 flex-shrink-0">{item.qty}</div>
+                    <div className="text-sm font-bold text-gray-900 flex-shrink-0 w-14 text-right">{item.total}</div>
                   </div>
                 ))}
               </div>
@@ -213,23 +230,23 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
             {/* Bill */}
             <div className="bg-gray-50 rounded-xl p-3 text-sm space-y-1.5">
               <div className="flex justify-between text-gray-500">
-                <span>Subtotal</span><span>â‚¹{order.subtotal}</span>
+                <span>Subtotal</span><span>{order.subtotal}</span>
               </div>
               <div className="flex justify-between text-gray-500">
                 <span>Delivery</span>
                 <span className={order.deliveryCharge === 0 ? 'text-green-600 font-medium' : ''}>
-                  {order.deliveryCharge === 0 ? 'Free' : `â‚¹${order.deliveryCharge}`}
+                  {order.deliveryCharge === 0 ? 'Free' : `${order.deliveryCharge}`}
                 </span>
               </div>
               <div className="flex justify-between font-bold text-gray-900 pt-1.5 border-t border-gray-200">
-                <span>Total</span><span style={{ color: '#FF6B35' }}>â‚¹{order.total}</span>
+                <span>Total</span><span style={{ color: '#FF6B35' }}>{order.total}</span>
               </div>
             </div>
 
             {/* Customer notes */}
             {order.notes && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2.5 text-sm text-yellow-800">
-                ðŸ“ <span className="font-medium">Note:</span> {order.notes}
+                " <span className="font-medium">Note:</span> {order.notes}
               </div>
             )}
 
@@ -250,7 +267,7 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
                   >
                     <option value="">Select rider...</option>
                     {riders.map(r => (
-                      <option key={r._id} value={r._id}>{r.name} â€” {r.phone}</option>
+                      <option key={r._id} value={r._id}>{r.name} " {r.phone}</option>
                     ))}
                   </select>
                   {assigning && (
@@ -267,11 +284,11 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
                   <button onClick={() => onStatusChange(order._id, 'confirmed')}
                     className="flex-1 py-3 rounded-xl text-white font-bold text-sm min-w-[120px]"
                     style={{ backgroundColor: '#22c55e' }}>
-                    âœ“ Accept Order
+                    " Accept Order
                   </button>
                   <button onClick={() => setShowReject(true)}
                     className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold text-sm min-w-[120px]">
-                    âœ— Reject
+                     Reject
                   </button>
                 </>
               )}
@@ -279,29 +296,42 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
                 <button onClick={() => onStatusChange(order._id, 'packing')}
                   className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
                   style={{ backgroundColor: '#f97316' }}>
-                  ðŸ“¦ Start Packing
+                  " Start Packing
                 </button>
               )}
               {order.orderStatus === 'packing' && (
                 <button onClick={() => onStatusChange(order._id, 'out_for_delivery')}
                   className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
                   style={{ backgroundColor: '#a855f7' }}>
-                  ðŸ›µ Send for Delivery
+                   Send for Delivery
                 </button>
               )}
               {order.orderStatus === 'out_for_delivery' && (
                 <button onClick={() => onStatusChange(order._id, 'delivered')}
                   className="flex-1 py-3 rounded-xl text-white font-bold text-sm"
                   style={{ backgroundColor: '#22c55e' }}>
-                  âœ… Mark Delivered
+                   Mark Delivered
                 </button>
               )}
               {whatsappLink && (
                 <a href={whatsappLink} target="_blank" rel="noreferrer"
                   className="px-4 py-3 rounded-xl text-white font-bold text-sm"
                   style={{ backgroundColor: '#25D366' }}>
-                  ðŸ“² WhatsApp
+                  " WhatsApp
                 </a>
+              )}
+              {invoiceUrl ? (
+                <a href={invoiceUrl} target="_blank" rel="noreferrer"
+                  className="px-4 py-3 rounded-xl font-bold text-sm"
+                  style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}>
+                   Invoice
+                </a>
+              ) : (
+                <button onClick={generateInvoice} disabled={invoiceLoading}
+                  className="px-4 py-3 rounded-xl font-bold text-sm"
+                  style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', cursor: 'pointer' }}>
+                  {invoiceLoading ? 'Generating...' : ' Invoice'}
+                </button>
               )}
             </div>
 
@@ -312,7 +342,7 @@ function OrderCard({ order, riders, onStatusChange, onAssignRider, isNew }) {
   );
 }
 
-// â”€â”€ MAIN PAGE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// "" MAIN PAGE """""""""""""""""""""""""""""""""""""""""""""""""""""
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [riders, setRiders] = useState([]);
@@ -374,7 +404,7 @@ export default function OrdersPage() {
     fetchOrders(tab);
   }, [tab]);
 
-  // â”€â”€ Socket.io â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // "" Socket.io """""""""""""""""""""""""""""""""""""""""""""""""
   useEffect(() => {
     let socket;
     import('socket.io-client').then(({ io }) => {
@@ -410,8 +440,8 @@ export default function OrdersPage() {
 
         // Browser notification
         if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification(`ðŸ›ï¸ New Order #${newOrder.orderId}`, {
-            body: `${newOrder.customerName} Â· â‚¹${newOrder.total}`,
+          new Notification(` New Order #${newOrder.orderId}`, {
+            body: `${newOrder.customerName}  ${newOrder.total}`,
             icon: '/favicon.ico'
           });
         }
@@ -429,7 +459,7 @@ export default function OrdersPage() {
     return () => { if (socket) socket.disconnect(); };
   }, []);
 
-  // â”€â”€ Actions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // "" Actions """""""""""""""""""""""""""""""""""""""""""""""""""
   const handleStatusChange = async (orderId, newStatus, rejectReason) => {
     try {
       const body = { orderStatus: newStatus };
@@ -473,14 +503,16 @@ export default function OrdersPage() {
         .new-order-flash { animation: orderFlash 0.7s ease-in-out 3; }
       `}</style>
 
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen flex" style={{ background: "#080808" }}>
+        <Sidebar />
+        <div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
 
         {/* Header */}
         <div className="bg-white border-b border-gray-100 px-6 pt-6 pb-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-              <p className="text-sm text-gray-400">Real-time Â· live updates</p>
+              <p className="text-sm text-gray-400">Real-time  live updates</p>
             </div>
             <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-1.5 rounded-full">
               <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
@@ -492,10 +524,10 @@ export default function OrdersPage() {
           {stats && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
-                { label: "Today's Orders",   value: stats.todayOrders,    icon: 'ðŸ“¦', highlight: false },
-                { label: "Today's Revenue",  value: `â‚¹${stats.todayRevenue}`, icon: 'ðŸ’°', highlight: false },
-                { label: 'Pending',          value: stats.pendingOrders,  icon: 'â³', highlight: stats.pendingOrders > 0 },
-                { label: 'Total Customers',  value: stats.totalCustomers, icon: 'ðŸ‘¥', highlight: false },
+                { label: "Today's Orders",   value: stats.todayOrders,    icon: '"', highlight: false },
+                { label: "Today's Revenue",  value: `${stats.todayRevenue}`, icon: '', highlight: false },
+                { label: 'Pending',          value: stats.pendingOrders,  icon: '', highlight: stats.pendingOrders > 0 },
+                { label: 'Total Customers',  value: stats.totalCustomers, icon: '', highlight: false },
               ].map(s => (
                 <div key={s.label}
                   className="rounded-2xl p-3 text-center border"
@@ -545,13 +577,13 @@ export default function OrdersPage() {
           ) : visibleOrders.length === 0 ? (
             <div className="text-center py-20">
               <div className="text-6xl mb-4">
-                {tab === 'new' ? 'ðŸ“­' : tab === 'delivered' ? 'ðŸŽ‰' : 'ðŸ“‹'}
+                {tab === 'new' ? '"' : tab === 'delivered' ? '' : '"'}
               </div>
               <p className="font-semibold text-gray-700">
                 {tab === 'new' ? 'No new orders yet' : `No ${STATUS_LABELS[tab].toLowerCase()} orders`}
               </p>
               <p className="text-gray-400 text-sm mt-1">
-                {tab === 'new' && 'New orders appear here instantly â€” no refresh needed'}
+                {tab === 'new' && 'New orders appear here instantly " no refresh needed'}
               </p>
             </div>
           ) : (
@@ -568,6 +600,7 @@ export default function OrdersPage() {
           )}
         </div>
 
+        </div>
       </div>
     </>
   );

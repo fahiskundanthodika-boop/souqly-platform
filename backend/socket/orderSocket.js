@@ -18,8 +18,11 @@ const setupOrderSocket = (io) => {
       console.log(`🛵 Rider ${riderId} connected`);
     });
 
-    // Customer tracks their order
+    // Customer tracks their order (accept both event names)
     socket.on('track_order', (orderId) => {
+      socket.join(`order_${orderId}`);
+    });
+    socket.on('join_order_room', (orderId) => {
       socket.join(`order_${orderId}`);
     });
 

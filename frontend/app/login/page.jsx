@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { API_URL } from '../../lib/config';
 import { useState } from 'react';
 import Link from 'next/link';
@@ -7,123 +7,92 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [error,   setError]   = useState('');
+  const [form,    setForm]    = useState({ email: '', password: '' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-
+    setError(''); setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // send/receive httpOnly cookie
+      const res  = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.message || 'Login failed. Please try again.');
-        return;
-      }
-
+      let data; try { data = await res.json(); } catch { data = {}; }
+      if (!data.success) { setError(data.message || 'Login failed.'); return; }
       localStorage.setItem('souqly_token', data.token);
-      localStorage.setItem('souqly_shop', JSON.stringify(data.shop));
-      router.push('/dashboard');
-    } catch (err) {
-      setError('Cannot connect to server. Make sure the backend is running.');
-    } finally {
-      setLoading(false);
-    }
+      localStorage.setItem('ownerToken',   data.token);
+      localStorage.setItem('souqly_shop',  JSON.stringify(data.shop));
+      window.location.href = '/dashboard';
+    } catch (err) { setError('Network error. Please try again.'); }
+    finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex items-center justify-center px-6">
-      <div className="w-full max-w-sm">
+    <div style={{ minHeight: '100vh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, fontFamily: "'Inter', sans-serif",
+      backgroundImage: 'linear-gradient(rgba(255,107,53,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,53,0.03) 1px,transparent 1px)',
+      backgroundSize: '60px 60px',
+    }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
 
         {/* Logo */}
-        <div className="text-center mb-10">
-          <Link href="/">
-            <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/30">
-              <span className="text-white font-bold text-2xl">S</span>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <Link href="/" style={{ display: 'inline-block' }}>
+            <div style={{ width: 44, height: 44, background: '#FF6B35', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 0 24px rgba(255,107,53,0.4)' }}>
+              <span style={{ color: '#fff', fontWeight: 900, fontSize: 20 }}>S</span>
             </div>
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Welcome back!</h1>
-          <p className="text-gray-500 text-sm mt-1">Sign in to your Souqly dashboard</p>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>Welcome back</h1>
+          <p style={{ fontSize: 14, color: '#606060', marginTop: 6 }}>Sign in to your Souqly dashboard</p>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm flex items-start gap-2">
-            <span className="mt-0.5">âš ï¸</span>
-            <span>{error}</span>
+          <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', borderRadius: 10, padding: '12px 16px', marginBottom: 20, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            {error}
           </div>
         )}
 
-        {/* Form */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-
+        {/* Form card */}
+        <div style={{ background: '#0f0f0f', border: '1px solid #1f1f1f', borderRadius: 16, padding: 28 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email Address</label>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#a0a0a0', marginBottom: 8 }}>Email Address</label>
               <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                type="email" value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
                 placeholder="you@example.com"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                required
-                autoComplete="email"
+                className="inp" required autoComplete="email"
               />
             </div>
-
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium text-gray-700">Password</label>
-              </div>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#a0a0a0', marginBottom: 8 }}>Password</label>
               <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                type="password" value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
                 placeholder="Your password"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                required
-                autoComplete="current-password"
+                className="inp" required autoComplete="current-password"
               />
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-primary text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-orange-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
+            <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', marginTop: 4, padding: '13px 20px', fontSize: 14 }}>
               {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                  </svg>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <svg style={{ animation: 'spin 1s linear infinite' }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
                   Signing in...
                 </span>
-              ) : 'Sign In â†’'}
+              ) : 'Sign In →'}
             </button>
-
           </form>
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-5">
+        <p style={{ textAlign: 'center', fontSize: 13, color: '#606060', marginTop: 20 }}>
           No account?{' '}
-          <Link href="/signup" className="text-primary font-semibold hover:underline">
-            Create one free
-          </Link>
+          <Link href="/signup" style={{ color: '#FF6B35', fontWeight: 600 }}>Create one free</Link>
         </p>
-
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
-
-

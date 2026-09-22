@@ -33,7 +33,7 @@ router.post('/create', orderValidation, async (req, res) => {
 
   try {
     const {
-      shopId, customerName, customerPhone, customerAddress,
+      shopId, branchId, customerName, customerPhone, customerAddress,
       customerLocation, items, paymentMethod, notes, channel,
       couponId, discount: couponDiscount, pointsRedeemed
     } = req.body;
@@ -73,6 +73,7 @@ router.post('/create', orderValidation, async (req, res) => {
     // Create the order
     const order = await Order.create({
       shopId,
+      ...(branchId ? { branchId } : {}),
       customerName: customerName.trim(),
       customerPhone: customerPhone.trim(),
       customerAddress: customerAddress?.trim() || '',
@@ -192,13 +193,46 @@ router.post('/create', orderValidation, async (req, res) => {
   }
 });
 
-// GET /api/orders/track/:id - Public order tracking (no login needed)
+// GET /api/orders/track/:id - Public order tracking by MongoDB _id
 router.get('/track/:id', async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('riderId', 'name phone vehicleType')
+      .populate('shopId', 'name slug phone whatsappNumber address city logo primaryColor')
       .select('-customerLocation');
     if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+    res.json({ success: true, order });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/orders/lookup - Customer self-lookup by phone + order number
+router.post('/lookup', async (req, res) => {
+  try {
+    const { phone, orderId, shopSlug } = req.body;
+    if (!phone || !orderId) {
+      return res.status(400).json({ success: false, message: 'Phone and order number required.' });
+    }
+
+    let query = { customerPhone: phone.trim(), orderId: Number(orderId) };
+
+    // Optionally scope to a shop slug
+    if (shopSlug) {
+      const Shop = require('../models/Shop');
+      const shop = await Shop.findOne({ slug: shopSlug });
+      if (shop) query.shopId = shop._id;
+    }
+
+    const order = await Order.findOne(query)
+      .populate('riderId', 'name phone vehicleType')
+      .populate('shopId', 'name slug phone whatsappNumber address city logo primaryColor')
+      .select('-customerLocation');
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'No order found. Check your phone number and order number.' });
+    }
+
     res.json({ success: true, order });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

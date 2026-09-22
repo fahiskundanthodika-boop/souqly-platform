@@ -1,6 +1,7 @@
-﻿'use client';
+'use client';
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import Sidebar from '../../../components/Sidebar';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -24,9 +25,12 @@ export default function ProductsPage() {
   const [imagePreview, setImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [stockModal, setStockModal] = useState(null); // product for stock edit
+  const [stockModal, setStockModal] = useState(null);
   const [newStock, setNewStock] = useState('');
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkResult, setBulkResult] = useState(null);
   const fileRef = useRef();
+  const bulkFileRef = useRef();
 
   // Load products
   const fetchProducts = async () => {
@@ -35,7 +39,8 @@ export default function ProductsPage() {
       if (search) params.set('search', search);
       if (activeCategory !== 'all') params.set('category', activeCategory);
 
-      const res = await fetch(`${API}/products?${params}`, { credentials: 'include' });
+      const token = localStorage.getItem('ownerToken');
+      const res = await fetch(`${API}/products?${params}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (data.success) {
         setProducts(data.products);
@@ -108,7 +113,7 @@ export default function ProductsPage() {
 
       const res = await fetch(url, {
         method,
-        credentials: 'include',
+        headers: { Authorization: `Bearer ${localStorage.getItem('ownerToken')}` },
         body: fd, // No Content-Type header - browser sets it with boundary for FormData
       });
 
@@ -129,7 +134,7 @@ export default function ProductsPage() {
     try {
       await fetch(`${API}/products/${product._id}/toggle`, {
         method: 'PATCH',
-        credentials: 'include',
+        headers: { Authorization: `Bearer ${localStorage.getItem('ownerToken')}` },
       });
       fetchProducts();
     } catch (e) {}
@@ -141,7 +146,7 @@ export default function ProductsPage() {
     try {
       await fetch(`${API}/products/${product._id}`, {
         method: 'DELETE',
-        credentials: 'include',
+        headers: { Authorization: `Bearer ${localStorage.getItem('ownerToken')}` },
       });
       fetchProducts();
     } catch (e) {}
@@ -153,8 +158,7 @@ export default function ProductsPage() {
     try {
       await fetch(`${API}/products/${stockModal._id}/stock`, {
         method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${localStorage.getItem('ownerToken')}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ stock: Number(newStock) }),
       });
       setStockModal(null);
@@ -162,55 +166,84 @@ export default function ProductsPage() {
     } catch (e) {}
   };
 
+  // Bulk upload Excel/CSV
+  const handleBulkUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setBulkUploading(true);
+    setBulkResult(null);
+    try {
+      const token = localStorage.getItem('ownerToken');
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(`${API}/products/bulk-upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await res.json();
+      setBulkResult(data);
+      if (data.success) fetchProducts();
+    } catch {
+      setBulkResult({ success: false, message: 'Upload failed. Please try again.' });
+    } finally {
+      setBulkUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const downloadTemplate = () => {
+    const token = localStorage.getItem('ownerToken');
+    const a = document.createElement('a');
+    a.href = `${API}/products/template`;
+    a.click();
+  };
+
   const isLowStock = (p) => p.stock <= p.lowStockAlert;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
 
-      {/* Sidebar */}
-      <aside className="w-56 bg-white border-r border-gray-100 min-h-screen p-4 flex-col hidden md:flex">
-        <div className="flex items-center gap-2 mb-8 px-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
-          </div>
-          <span className="font-bold text-gray-900 text-sm">Souqly</span>
-        </div>
-        <nav className="space-y-1">
-          {[
-            { href: '/dashboard', label: 'Dashboard', icon: 'ðŸ“Š' },
-            { href: '/dashboard/orders', label: 'Orders', icon: 'ðŸ“¦' },
-            { href: '/dashboard/products', label: 'Products', icon: 'ðŸ›ï¸' },
-            { href: '/dashboard/riders', label: 'Riders', icon: 'ðŸ›µ' },
-            { href: '/dashboard/analytics', label: 'Analytics', icon: 'ðŸ“ˆ' },
-            { href: '/dashboard/marketing', label: 'Marketing', icon: 'ðŸ“£' },
-            { href: '/dashboard/settings', label: 'Settings', icon: 'âš™ï¸' },
-          ].map(item => (
-            <Link key={item.href} href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
-                item.href === '/dashboard/products'
-                  ? 'bg-orange-50 text-orange-500 font-medium'
-                  : 'text-gray-600 hover:bg-orange-50 hover:text-orange-500'
-              }`}>
-              <span>{item.icon}</span>{item.label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
+      <Sidebar />
 
       {/* Main */}
       <div className="flex-1 flex flex-col">
 
         {/* Top bar */}
-        <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+        <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between gap-3 flex-wrap">
           <div>
             <h1 className="font-bold text-gray-900 text-lg">Products</h1>
             <p className="text-gray-400 text-xs">{products.length} products total</p>
           </div>
-          <button onClick={openAdd}
-            className="bg-orange-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center gap-2">
-            <span className="text-lg leading-none">+</span> Add Product
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Download template */}
+            <button onClick={downloadTemplate}
+              className="border border-gray-200 text-gray-600 px-3 py-2 rounded-xl text-xs font-medium hover:bg-gray-50 transition-colors">
+              📥 Excel Template
+            </button>
+            {/* Bulk upload */}
+            <input ref={bulkFileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleBulkUpload} />
+            <button onClick={() => bulkFileRef.current?.click()} disabled={bulkUploading}
+              className="border border-blue-200 text-blue-600 px-3 py-2 rounded-xl text-xs font-medium hover:bg-blue-50 transition-colors disabled:opacity-60">
+              {bulkUploading ? '⏳ Uploading...' : '📤 Bulk Upload'}
+            </button>
+            {/* Add single */}
+            <button onClick={openAdd}
+              className="bg-orange-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-orange-600 transition-colors flex items-center gap-2">
+              <span className="text-lg leading-none">+</span> Add Product
+            </button>
+          </div>
         </div>
+
+        {/* Bulk upload result */}
+        {bulkResult && (
+          <div className={`mx-6 mt-4 p-3 rounded-xl text-sm ${bulkResult.success ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
+            {bulkResult.success
+              ? `✅ ${bulkResult.message} ${bulkResult.skipped ? `(${bulkResult.skipped} rows skipped)` : ''}`
+              : `❌ ${bulkResult.message}`}
+            <button onClick={() => setBulkResult(null)} className="ml-3 text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+        )}
 
         <div className="p-6">
 
@@ -219,7 +252,7 @@ export default function ProductsPage() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="ðŸ” Search products by name..."
+              placeholder=" Search products by name..."
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
             />
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -244,7 +277,7 @@ export default function ProductsPage() {
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">ðŸ›ï¸</div>
+              <div className="text-6xl mb-4"></div>
               <h3 className="font-bold text-gray-900 mb-2">No products yet</h3>
               <p className="text-gray-400 text-sm mb-6">Add your first product to start selling</p>
               <button onClick={openAdd} className="bg-orange-500 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-orange-600">
@@ -260,7 +293,7 @@ export default function ProductsPage() {
                   <div className="relative bg-gray-50 h-36 flex items-center justify-center">
                     {product.image
                       ? <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                      : <span className="text-4xl">ðŸ›ï¸</span>
+                      : <span className="text-4xl"></span>
                     }
                     {/* Low stock badge */}
                     {isLowStock(product) && (
@@ -283,9 +316,9 @@ export default function ProductsPage() {
 
                     {/* Price */}
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className="font-bold text-orange-500 text-sm">â‚¹{product.price}</span>
+                      <span className="font-bold text-orange-500 text-sm">{product.price}</span>
                       {product.mrp && product.mrp > product.price && (
-                        <span className="text-gray-400 line-through text-xs">â‚¹{product.mrp}</span>
+                        <span className="text-gray-400 line-through text-xs">{product.mrp}</span>
                       )}
                     </div>
 
@@ -309,15 +342,15 @@ export default function ProductsPage() {
                             ? 'bg-green-50 text-green-600 hover:bg-green-100'
                             : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                         }`}>
-                        {product.isAvailable ? 'âœ“ Live' : 'âœ— Hidden'}
+                        {product.isAvailable ? '" Live' : ' Hidden'}
                       </button>
                       <button onClick={() => openEdit(product)}
                         className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors" title="Edit">
-                        âœï¸
+                        
                       </button>
                       <button onClick={() => deleteProduct(product)}
                         className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors" title="Delete">
-                        ðŸ—‘ï¸
+                        
                       </button>
                     </div>
                   </div>
@@ -328,7 +361,7 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* â”€â”€ ADD / EDIT MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* "" ADD / EDIT MODAL """"""""""""""""""""""""""""" */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -340,7 +373,7 @@ export default function ProductsPage() {
               </h2>
               <button onClick={() => setShowModal(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400">
-                âœ•
+                
               </button>
             </div>
 
@@ -349,7 +382,7 @@ export default function ProductsPage() {
               {/* Error */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
-                  âš ï¸ {error}
+                   {error}
                 </div>
               )}
 
@@ -363,9 +396,9 @@ export default function ProductsPage() {
                     ? <img src={imagePreview} className="w-full h-full object-cover" alt="preview" />
                     : (
                       <div className="text-center">
-                        <div className="text-3xl mb-1">ðŸ“·</div>
+                        <div className="text-3xl mb-1"></div>
                         <p className="text-gray-400 text-xs">Click to upload image</p>
-                        <p className="text-gray-300 text-xs">JPG, PNG, WebP Â· Max 5MB</p>
+                        <p className="text-gray-300 text-xs">JPG, PNG, WebP  Max 5MB</p>
                       </div>
                     )
                   }
@@ -394,14 +427,14 @@ export default function ProductsPage() {
               {/* Price + MRP */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Selling Price (â‚¹) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Selling Price () *</label>
                   <input type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})}
                     placeholder="0"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
                     required min="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">MRP (â‚¹) <span className="text-gray-400 font-normal">crossed</span></label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">MRP () <span className="text-gray-400 font-normal">crossed</span></label>
                   <input type="number" value={form.mrp} onChange={e => setForm({...form, mrp: e.target.value})}
                     placeholder="0"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
@@ -474,7 +507,7 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* â”€â”€ STOCK UPDATE MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* "" STOCK UPDATE MODAL """"""""""""""""""""""""""" */}
       {stockModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-xs p-6">

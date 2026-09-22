@@ -1,5 +1,6 @@
 // Marketing page - WhatsApp broadcast campaigns
 'use client';
+import Sidebar from '../../../components/Sidebar';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '../../../lib/api';
@@ -57,7 +58,7 @@ export default function MarketingPage() {
   const statusColors = { draft: 'bg-gray-100 text-gray-600', scheduled: 'bg-blue-100 text-blue-700', sending: 'bg-yellow-100 text-yellow-700', sent: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700' };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex" style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
       <nav className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="text-gray-400 hover:text-primary">← Dashboard</Link>
@@ -136,6 +137,7 @@ export default function MarketingPage() {
           </div>
         )}
       </div>
+        </div>
     </div>
   );
 }

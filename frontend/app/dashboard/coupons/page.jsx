@@ -1,4 +1,5 @@
 'use client';
+import Sidebar from '../../../components/Sidebar';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '../../../lib/api';
@@ -53,7 +54,7 @@ export default function CouponsPage() {
   const isExpired = (c) => c.expiresAt && new Date() > new Date(c.expiresAt);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen flex" style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
       <nav className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="text-gray-400 hover:text-primary">← Dashboard</Link>
@@ -191,6 +192,7 @@ export default function CouponsPage() {
           </div>
         )}
       </div>
+        </div>
     </div>
   );
 }
