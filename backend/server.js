@@ -110,6 +110,7 @@ app.use('/api/reports', require('./routes/reports.routes'));
 app.use('/api/webhook', require('./routes/webhook.routes'));
 app.use('/api/wa-connect', require('./routes/wa_connect.routes'));
 app.use('/api/banners',   require('./routes/banner.routes'));
+app.use('/api/theme',     require('./routes/theme.routes'));
 
 // Health check route (test if API is running)
 app.get('/api/health', (req, res) => {

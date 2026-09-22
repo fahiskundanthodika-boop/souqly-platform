@@ -32,7 +32,19 @@ const ShopSchema = new mongoose.Schema({
   },
 
   // Storefront Look
-  theme: { type: String, enum: ['classic', 'modern', 'minimal'], default: 'modern' },
+  theme: {
+    type: String,
+    enum: ['classic-white','dark-premium','fresh-market','medical-pro','spice-route','minimal-clean','night-owl','kerala-kart','arabic-elegance','sweet-tooth','corporate-blue','sunset-glow'],
+    default: 'classic-white'
+  },
+  themeColors: {
+    primary:    { type: String, default: '#FF6B35' },
+    background: { type: String, default: '#f8f8f8' },
+    card:       { type: String, default: '#ffffff' },
+    text:       { type: String, default: '#1a1a1a' },
+    accent:     { type: String, default: '#FF6B35' },
+  },
+  colorScheme: { type: String, default: 'default' },
   primaryColor: { type: String, default: '#FF6B35' }, // Souqly orange
 
   // Subscription Plan
@@ -77,6 +89,15 @@ const ShopSchema = new mongoose.Schema({
   smsSettings: {
     msg91AuthKey: { type: String, default: '' },
     senderId: { type: String, default: 'SOUQLY' }
+  },
+
+  // WhatsApp Business API (each shop's own number)
+  whatsappApi: {
+    phoneNumberId:  { type: String, default: '' }, // Meta Phone Number ID
+    accessToken:    { type: String, default: '' }, // Meta Permanent Access Token
+    businessNumber: { type: String, default: '' }, // Display number e.g. +91 98765 43210
+    connected:      { type: Boolean, default: false },
+    connectedAt:    { type: Date }
   },
 
   // Loyalty Points settings
