@@ -61,6 +61,9 @@ const OrderSchema = new mongoose.Schema({
   // Extra
   notes: { type: String },            // customer's special instructions
   invoiceUrl: { type: String },       // PDF invoice link
+  invoiceSent: { type: Boolean, default: false },
+  merchantTransactionId: { type: String },  // PhonePe / payment gateway txn ID
+  whatsappNotified: { type: Boolean, default: false },
   prescriptionImage: { type: String },// for pharmacy orders
   isCreditSale: { type: Boolean, default: false }, // buy now pay later
 
