@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import {
   LayoutDashboard, ShoppingBag, Package, Bike, BarChart2,
   Tag, Star, GitBranch, MessageCircle, Megaphone, FileText,
-  TrendingUp, CreditCard, Settings, LogOut, Store, ChevronRight, Image, Palette
+  TrendingUp, CreditCard, Settings, LogOut, Store, ChevronRight, Image, Palette, Monitor
 } from 'lucide-react';
 
 const NAV = [
@@ -14,6 +14,7 @@ const NAV = [
   { href: '/dashboard/products',   label: 'Products',     icon: Package },
   { href: '/dashboard/banners',    label: 'Banners',      icon: Image },
   { href: '/dashboard/themes',     label: 'Themes',       icon: Palette },
+  { href: '/dashboard/pos',        label: 'POS',          icon: Monitor },
   { href: '/dashboard/riders',     label: 'Riders',       icon: Bike },
   { href: '/dashboard/analytics',  label: 'Analytics',    icon: BarChart2 },
   { href: '/dashboard/coupons',    label: 'Coupons',      icon: Tag },
