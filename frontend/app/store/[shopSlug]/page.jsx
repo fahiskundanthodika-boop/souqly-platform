@@ -167,6 +167,16 @@ export default function StorePage() {
     </div>
   );
 
+  // Override the dark body background set by globals.css for dashboard
+  useEffect(() => {
+    document.body.style.background = T.background;
+    document.body.style.color = T.text;
+    return () => {
+      document.body.style.background = '';
+      document.body.style.color = '';
+    };
+  }, [T.background, T.text]);
+
   return (
     <div className="min-h-screen" style={{ background: T.background, color: T.text }}>
 

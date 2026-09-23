@@ -96,10 +96,11 @@ export default function POSPage() {
     setPlacing(true);
     const token = localStorage.getItem('ownerToken');
     try {
-      const res = await fetch(`${API}/orders`, {
+      const res = await fetch(`${API}/orders/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
+          shopId:          shop._id,
           customerName:    customer || 'Walk-in Customer',
           customerPhone:   phone   || '0000000000',
           customerAddress: 'Counter Sale',
