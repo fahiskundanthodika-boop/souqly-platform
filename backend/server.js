@@ -108,6 +108,7 @@ app.use('/api/subscription', require('./routes/subscription.routes'));
 app.use('/api/invoices', require('./routes/invoice.routes'));
 app.use('/api/reports', require('./routes/reports.routes'));
 app.use('/api/webhook', require('./routes/webhook.routes'));
+app.use('/api/phonepe', require('./routes/phonepe.routes'));
 app.use('/api/wa-connect', require('./routes/wa_connect.routes'));
 app.use('/api/banners',   require('./routes/banner.routes'));
 app.use('/api/theme',     require('./routes/theme.routes'));
