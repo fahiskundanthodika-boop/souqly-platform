@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useState, useEffect } from 'react';
 
@@ -82,14 +82,14 @@ export default function BranchesPage() {
     } finally { setSaving(false); }
   }
 
-  // ── Inventory view ──────────────────────────────────────────────
+  // â”€â”€ Inventory view â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (inventoryBranch) {
     return (
-    <div className="min-h-screen bg-gray-50 flex"><Sidebar /><div className="flex-1 overflow-auto p-6">
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }}><Sidebar /><div className="flex-1 overflow-auto p-6">
         <button onClick={() => { setInventoryBranch(null); setInventory([]); }} style={{ background: 'none', border: 'none', color: '#FF6B35', cursor: 'pointer', fontSize: 14, marginBottom: 16 }}>
-          ← Back to Branches
+          â† Back to Branches
         </button>
-        <h2 style={{ margin: '0 0 4px' }}>Inventory — {inventoryBranch.branchName}</h2>
+        <h2 style={{ margin: '0 0 4px' }}>Inventory â€” {inventoryBranch.branchName}</h2>
         <p style={{ color: '#666', marginBottom: 20 }}>{inventoryBranch.city || inventoryBranch.address}</p>
 
         {msg && <div style={{ padding: '10px 14px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, marginBottom: 16, color: '#16a34a' }}>{msg}</div>}
@@ -116,7 +116,7 @@ export default function BranchesPage() {
                           <span style={{ fontWeight: 500 }}>{item.name}</span>
                         </div>
                       </td>
-                      <td style={td}>₹{item.price}</td>
+                      <td style={td}>â‚¹{item.price}</td>
                       <td style={td}>
                         <input type="number" min="0" value={item.stock} onChange={e => updateStock(item.productId, 'stock', e.target.value)}
                           style={{ width: 80, padding: '4px 8px', border: '1px solid #e0e0e0', borderRadius: 6 }} />
@@ -145,9 +145,9 @@ export default function BranchesPage() {
     );
   }
 
-  // ── Branches list ───────────────────────────────────────────────
+  // â”€â”€ Branches list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
-    <div className="min-h-screen bg-gray-50 flex"><Sidebar /><div className="flex-1 overflow-auto" style={{ padding: '24px', maxWidth: 900 }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ padding: '24px', maxWidth: 900 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
           <h1 style={{ margin: 0 }}>Branches</h1>
@@ -206,7 +206,7 @@ export default function BranchesPage() {
       {/* Branches grid */}
       {loading ? <p>Loading branches...</p> : branches.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>🏪</div>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>ðŸª</div>
           <p style={{ fontWeight: 600, fontSize: 18, margin: '0 0 6px', color: '#555' }}>No branches yet</p>
           <p style={{ margin: 0 }}>Add your first branch to manage multiple locations.</p>
         </div>
@@ -223,14 +223,14 @@ export default function BranchesPage() {
                   {b.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              {b.city && <p style={{ margin: '0 0 4px', fontSize: 13, color: '#666' }}>📍 {b.city}{b.address ? `, ${b.address}` : ''}</p>}
-              {b.managerName && <p style={{ margin: '0 0 4px', fontSize: 13, color: '#666' }}>👤 {b.managerName}{b.managerPhone ? ` · ${b.managerPhone}` : ''}</p>}
-              <p style={{ margin: '0 0 16px', fontSize: 13, color: '#666' }}>🚚 {b.deliveryRadius} km delivery radius</p>
+              {b.city && <p style={{ margin: '0 0 4px', fontSize: 13, color: '#666' }}>ðŸ“ {b.city}{b.address ? `, ${b.address}` : ''}</p>}
+              {b.managerName && <p style={{ margin: '0 0 4px', fontSize: 13, color: '#666' }}>ðŸ‘¤ {b.managerName}{b.managerPhone ? ` Â· ${b.managerPhone}` : ''}</p>}
+              <p style={{ margin: '0 0 16px', fontSize: 13, color: '#666' }}>ðŸšš {b.deliveryRadius} km delivery radius</p>
 
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => openInventory(b)}
                   style={{ flex: 1, background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: 8, padding: '7px 12px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                  📦 Inventory
+                  ðŸ“¦ Inventory
                 </button>
                 <button onClick={() => openEdit(b)}
                   style={{ background: '#f5f5f5', border: 'none', borderRadius: 8, padding: '7px 12px', cursor: 'pointer', fontSize: 13 }}>
@@ -251,3 +251,4 @@ export default function BranchesPage() {
 
 const th = { padding: '10px 14px', textAlign: 'left', fontWeight: 600, fontSize: 13, color: '#555', borderBottom: '1px solid #e0e0e0' };
 const td = { padding: '10px 14px' };
+

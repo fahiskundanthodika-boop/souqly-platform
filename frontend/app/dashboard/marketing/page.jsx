@@ -1,4 +1,4 @@
-// Marketing page - WhatsApp broadcast campaigns
+﻿// Marketing page - WhatsApp broadcast campaigns
 'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useEffect, useState } from 'react';
@@ -58,10 +58,10 @@ export default function MarketingPage() {
   const statusColors = { draft: 'bg-gray-100 text-gray-600', scheduled: 'bg-blue-100 text-blue-700', sending: 'bg-yellow-100 text-yellow-700', sent: 'bg-green-100 text-green-700', cancelled: 'bg-red-100 text-red-700' };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }} style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
       <nav className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-gray-400 hover:text-primary">← Dashboard</Link>
+          <Link href="/dashboard" className="text-gray-400 hover:text-primary">â† Dashboard</Link>
           <span className="text-gray-300">/</span>
           <span className="font-bold text-gray-900">Marketing</span>
         </div>
@@ -78,7 +78,7 @@ export default function MarketingPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Message *</label>
                 <textarea
-                  placeholder="Type your WhatsApp message here... 🎉 Special offer! Get 20% off on all orders today. Shop now at your store link!"
+                  placeholder="Type your WhatsApp message here... ðŸŽ‰ Special offer! Get 20% off on all orders today. Shop now at your store link!"
                   value={form.message}
                   onChange={e => setForm({...form, message: e.target.value})}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
@@ -105,7 +105,7 @@ export default function MarketingPage() {
 
         {loading ? <div className="text-center py-12 text-gray-400">Loading campaigns...</div> : broadcasts.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
-            <div className="text-5xl mb-3">📣</div>
+            <div className="text-5xl mb-3">ðŸ“£</div>
             <p>No campaigns yet. Create your first WhatsApp broadcast!</p>
           </div>
         ) : (
@@ -118,10 +118,10 @@ export default function MarketingPage() {
                 </div>
                 <p className="text-sm text-gray-700 mb-3 bg-gray-50 rounded-xl p-3">{b.message}</p>
                 <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-                  <span>👥 {b.totalRecipients} recipients</span>
-                  <span>✅ {b.delivered} delivered</span>
-                  <span>❌ {b.failed} failed</span>
-                  <span>🎯 Audience: {b.targetAudience}</span>
+                  <span>ðŸ‘¥ {b.totalRecipients} recipients</span>
+                  <span>âœ… {b.delivered} delivered</span>
+                  <span>âŒ {b.failed} failed</span>
+                  <span>ðŸŽ¯ Audience: {b.targetAudience}</span>
                 </div>
                 {b.status === 'draft' && (
                   <button
@@ -129,7 +129,7 @@ export default function MarketingPage() {
                     disabled={sending === b._id}
                     className="btn-primary text-sm py-2"
                   >
-                    {sending === b._id ? 'Sending...' : '📤 Send Now on WhatsApp'}
+                    {sending === b._id ? 'Sending...' : 'ðŸ“¤ Send Now on WhatsApp'}
                   </button>
                 )}
               </div>

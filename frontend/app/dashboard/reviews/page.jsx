@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 const Stars = ({ rating, size = 'text-sm' }) => (
   <span className={size}>
-    {[1,2,3,4,5].map(s => <span key={s}>{s <= rating ? '⭐' : '☆'}</span>)}
+    {[1,2,3,4,5].map(s => <span key={s}>{s <= rating ? 'â­' : 'â˜†'}</span>)}
   </span>
 );
 
@@ -37,9 +37,9 @@ export default function ReviewsPage() {
   }));
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }} style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
       <nav className="bg-white border-b px-6 py-4 flex items-center gap-3">
-        <Link href="/dashboard" className="text-gray-400 hover:text-primary">← Dashboard</Link>
+        <Link href="/dashboard" className="text-gray-400 hover:text-primary">â† Dashboard</Link>
         <span className="text-gray-300">/</span>
         <span className="font-bold text-gray-900">Reviews</span>
       </nav>
@@ -62,7 +62,7 @@ export default function ReviewsPage() {
                   return (
                     <div key={star} className="flex items-center gap-2 text-xs">
                       <span className="text-gray-500 w-4">{star}</span>
-                      <span className="text-yellow-400 text-xs">★</span>
+                      <span className="text-yellow-400 text-xs">â˜…</span>
                       <div className="flex-1 bg-gray-100 rounded-full h-2">
                         <div className="bg-yellow-400 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
                       </div>
@@ -80,7 +80,7 @@ export default function ReviewsPage() {
           <div className="text-center py-12 text-gray-400">Loading reviews...</div>
         ) : reviews.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-            <div className="text-5xl mb-3">⭐</div>
+            <div className="text-5xl mb-3">â­</div>
             <div className="font-semibold text-gray-700">No reviews yet</div>
             <div className="text-sm text-gray-400 mt-1">Reviews appear here after customers rate their delivered orders</div>
           </div>
@@ -97,7 +97,7 @@ export default function ReviewsPage() {
                       <div>
                         <span className="font-semibold text-gray-900 text-sm">{review.customerName}</span>
                         {review.orderId && (
-                          <span className="text-xs text-gray-400 ml-2">· Order #{review.orderId.orderId}</span>
+                          <span className="text-xs text-gray-400 ml-2">Â· Order #{review.orderId.orderId}</span>
                         )}
                       </div>
                     </div>
@@ -107,7 +107,7 @@ export default function ReviewsPage() {
                     )}
                     <p className="text-xs text-gray-400 mt-2">
                       {new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      {!review.isVisible && <span className="ml-2 text-orange-500">· Hidden</span>}
+                      {!review.isVisible && <span className="ml-2 text-orange-500">Â· Hidden</span>}
                     </p>
                   </div>
                   <button onClick={() => handleToggle(review)}

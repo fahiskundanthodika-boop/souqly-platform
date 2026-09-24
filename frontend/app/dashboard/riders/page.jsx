@@ -1,4 +1,4 @@
-// Riders management page - add and manage delivery staff
+﻿// Riders management page - add and manage delivery staff
 'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useEffect, useState } from 'react';
@@ -53,10 +53,10 @@ export default function RidersPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }} style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
       <nav className="bg-white border-b px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-gray-400 hover:text-primary">← Dashboard</Link>
+          <Link href="/dashboard" className="text-gray-400 hover:text-primary">â† Dashboard</Link>
           <span className="text-gray-300">/</span>
           <span className="font-bold text-gray-900">Riders</span>
         </div>
@@ -95,7 +95,7 @@ export default function RidersPage() {
           <div className="text-center py-12 text-gray-400">Loading riders...</div>
         ) : riders.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
-            <div className="text-5xl mb-3">🛵</div>
+            <div className="text-5xl mb-3">ðŸ›µ</div>
             <p>No riders yet. Add your delivery staff!</p>
           </div>
         ) : (
@@ -111,7 +111,7 @@ export default function RidersPage() {
                     <div className="text-sm text-gray-400">{rider.phone}</div>
                   </div>
                   <div className={`ml-auto text-xs px-2 py-1 rounded-full ${rider.isOnline ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {rider.isOnline ? '🟢 Online' : '⚫ Offline'}
+                    {rider.isOnline ? 'ðŸŸ¢ Online' : 'âš« Offline'}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-sm mb-4">
@@ -120,12 +120,12 @@ export default function RidersPage() {
                     <div className="text-xs text-gray-400">Total Deliveries</div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-2 text-center">
-                    <div className="font-bold">₹{rider.totalEarnings}</div>
+                    <div className="font-bold">â‚¹{rider.totalEarnings}</div>
                     <div className="text-xs text-gray-400">Total Earned</div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">🛵 {rider.vehicleType}</span>
+                  <span className="text-gray-400">ðŸ›µ {rider.vehicleType}</span>
                   <button
                     onClick={() => toggleApproval(rider)}
                     className={`text-xs px-3 py-1.5 rounded-lg ${rider.isApproved ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}

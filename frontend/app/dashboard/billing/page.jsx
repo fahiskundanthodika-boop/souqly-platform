@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -104,7 +104,7 @@ export default function BillingPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex"><Sidebar /><div className="flex-1 overflow-auto p-6" style={{ maxWidth: 1000 }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }}><Sidebar /><div className="flex-1 overflow-auto p-6" style={{ maxWidth: 1000 }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
         <h1 style={{ margin: '0 0 6px' }}>Billing & Subscription</h1>
@@ -123,11 +123,11 @@ export default function BillingPage() {
           <p style={{ margin: '0 0 4px', fontSize: 13, color: '#666' }}>Current Plan</p>
           <h2 style={{ margin: '0 0 4px', color: planInfo?.color }}>{planInfo?.name} Plan</h2>
           {expiresAt && <p style={{ margin: 0, fontSize: 13, color: '#888' }}>Renews on {new Date(expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
-          {!expiresAt && currentPlan === 'free' && <p style={{ margin: 0, fontSize: 13, color: '#888' }}>No billing — upgrade anytime</p>}
+          {!expiresAt && currentPlan === 'free' && <p style={{ margin: 0, fontSize: 13, color: '#888' }}>No billing â€” upgrade anytime</p>}
         </div>
         {currentPlan !== 'free' && (
           <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: '0 0 2px', fontSize: 22, fontWeight: 700, color: planInfo?.color }}>₹{planInfo?.price}<span style={{ fontSize: 13, fontWeight: 400 }}>/mo</span></p>
+            <p style={{ margin: '0 0 2px', fontSize: 22, fontWeight: 700, color: planInfo?.color }}>â‚¹{planInfo?.price}<span style={{ fontSize: 13, fontWeight: 400 }}>/mo</span></p>
           </div>
         )}
       </div>
@@ -151,12 +151,12 @@ export default function BillingPage() {
               )}
               <h3 style={{ margin: '0 0 4px', color: plan.color, fontSize: 18 }}>{plan.name}</h3>
               <p style={{ margin: '0 0 16px', fontSize: 24, fontWeight: 700 }}>
-                {plan.price === 0 ? 'Free' : <>₹{plan.price.toLocaleString('en-IN')}<span style={{ fontSize: 13, fontWeight: 400, color: '#888' }}>/mo</span></>}
+                {plan.price === 0 ? 'Free' : <>â‚¹{plan.price.toLocaleString('en-IN')}<span style={{ fontSize: 13, fontWeight: 400, color: '#888' }}>/mo</span></>}
               </p>
               <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', fontSize: 13 }}>
                 {plan.features.map(f => (
                   <li key={f} style={{ padding: '3px 0', color: '#555', display: 'flex', gap: 8 }}>
-                    <span style={{ color: plan.color }}>✓</span> {f}
+                    <span style={{ color: plan.color }}>âœ“</span> {f}
                   </li>
                 ))}
               </ul>
@@ -180,7 +180,7 @@ export default function BillingPage() {
                   : paying === plan.id ? 'Processing...'
                   : isDowngrade ? 'Downgrade'
                   : plan.price === 0 ? 'Switch to Free'
-                  : 'Upgrade — Pay with PhonePe'}
+                  : 'Upgrade â€” Pay with PhonePe'}
               </button>
             </div>
           );
@@ -190,7 +190,7 @@ export default function BillingPage() {
       {/* PhonePe badge */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <p style={{ color: '#888', fontSize: 13 }}>
-          🔒 Secure payments powered by <strong style={{ color: '#5f259f' }}>PhonePe</strong> · UPI · Cards · Net Banking
+          ðŸ”’ Secure payments powered by <strong style={{ color: '#5f259f' }}>PhonePe</strong> Â· UPI Â· Cards Â· Net Banking
         </p>
       </div>
 
@@ -212,8 +212,8 @@ export default function BillingPage() {
                   <tr key={h._id} style={{ borderBottom: i < history.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
                     <td style={{ padding: '12px 16px' }}>{new Date(h.createdAt).toLocaleDateString('en-IN')}</td>
                     <td style={{ padding: '12px 16px', fontWeight: 600, textTransform: 'capitalize' }}>{h.plan}</td>
-                    <td style={{ padding: '12px 16px' }}>₹{h.amount?.toLocaleString('en-IN') || 0}</td>
-                    <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>{h.gateway || '—'}</td>
+                    <td style={{ padding: '12px 16px' }}>â‚¹{h.amount?.toLocaleString('en-IN') || 0}</td>
+                    <td style={{ padding: '12px 16px', textTransform: 'capitalize' }}>{h.gateway || 'â€”'}</td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ background: h.status === 'active' ? '#dcfce7' : '#fef3c7', color: h.status === 'active' ? '#16a34a' : '#d97706', padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 600, textTransform: 'capitalize' }}>
                         {h.status}
@@ -231,3 +231,4 @@ export default function BillingPage() {
     </div></div>
   );
 }
+

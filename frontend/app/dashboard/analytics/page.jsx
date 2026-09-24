@@ -1,4 +1,4 @@
-// Analytics page - sales charts and insights
+﻿// Analytics page - sales charts and insights
 'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useEffect, useState } from 'react';
@@ -28,9 +28,9 @@ export default function AnalyticsPage() {
   if (loading) return <div className="p-12 text-center text-gray-400">Loading analytics...</div>;
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }} style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
       <nav className="bg-white border-b px-6 py-4 flex items-center gap-3">
-        <Link href="/dashboard" className="text-gray-400 hover:text-primary">← Dashboard</Link>
+        <Link href="/dashboard" className="text-gray-400 hover:text-primary">â† Dashboard</Link>
         <span className="text-gray-300">/</span>
         <span className="font-bold text-gray-900">Analytics</span>
       </nav>
@@ -40,10 +40,10 @@ export default function AnalyticsPage() {
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: "Today's Revenue", value: `₹${summary?.todayRevenue || 0}`, icon: '💰' },
-            { label: "This Month", value: `₹${summary?.monthRevenue || 0}`, icon: '📅' },
-            { label: "Today's Orders", value: summary?.todayOrders || 0, icon: '📦' },
-            { label: 'Total Customers', value: summary?.totalCustomers || 0, icon: '👥' },
+            { label: "Today's Revenue", value: `â‚¹${summary?.todayRevenue || 0}`, icon: 'ðŸ’°' },
+            { label: "This Month", value: `â‚¹${summary?.monthRevenue || 0}`, icon: 'ðŸ“…' },
+            { label: "Today's Orders", value: summary?.todayOrders || 0, icon: 'ðŸ“¦' },
+            { label: 'Total Customers', value: summary?.totalCustomers || 0, icon: 'ðŸ‘¥' },
           ].map((card, i) => (
             <div key={i} className="card text-center">
               <div className="text-3xl mb-2">{card.icon}</div>
@@ -64,7 +64,7 @@ export default function AnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis dataKey="_id" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value) => [`₹${value}`, 'Revenue']} />
+                <Tooltip formatter={(value) => [`â‚¹${value}`, 'Revenue']} />
                 <Bar dataKey="revenue" fill="#FF6B35" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -85,7 +85,7 @@ export default function AnalyticsPage() {
                     <div className="font-medium text-sm text-gray-900">{product.name}</div>
                     <div className="text-xs text-gray-400">{product.totalSold} units sold</div>
                   </div>
-                  <span className="font-bold text-primary text-sm">₹{product.revenue}</span>
+                  <span className="font-bold text-primary text-sm">â‚¹{product.revenue}</span>
                 </div>
               ))}
             </div>

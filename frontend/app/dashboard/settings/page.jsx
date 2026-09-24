@@ -1,4 +1,4 @@
-// Settings page - shop configuration
+﻿// Settings page - shop configuration
 'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useEffect, useState } from 'react';
@@ -33,9 +33,9 @@ export default function SettingsPage() {
   if (loading || !shop) return <div className="p-12 text-center text-gray-400">Loading settings...</div>;
 
   return (
-    <div className="min-h-screen flex" style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }} style={{ background: "#080808" }}><Sidebar /><div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
       <nav className="bg-white border-b px-6 py-4 flex items-center gap-3">
-        <Link href="/dashboard" className="text-gray-400 hover:text-primary">← Dashboard</Link>
+        <Link href="/dashboard" className="text-gray-400 hover:text-primary">â† Dashboard</Link>
         <span className="text-gray-300">/</span>
         <span className="font-bold text-gray-900">Settings</span>
       </nav>
@@ -73,17 +73,17 @@ export default function SettingsPage() {
             <h2 className="font-bold text-gray-900">Delivery Settings</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Charge (₹)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Charge (â‚¹)</label>
                 <input type="number" value={shop.deliveryCharge || 40} onChange={e => setShop({...shop, deliveryCharge: e.target.value})}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Free Delivery Above (₹)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Free Delivery Above (â‚¹)</label>
                 <input type="number" value={shop.freeDeliveryAbove || 500} onChange={e => setShop({...shop, freeDeliveryAbove: e.target.value})}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Min Order Amount (₹)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Min Order Amount (â‚¹)</label>
                 <input type="number" value={shop.minOrderAmount || 0} onChange={e => setShop({...shop, minOrderAmount: e.target.value})}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
@@ -132,20 +132,20 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Points per ₹1 spent</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Points per â‚¹1 spent</label>
                 <input type="number" min="1" max="10"
                   value={shop.loyaltySettings?.pointsPerRupee ?? 1}
                   onChange={e => setShop({ ...shop, loyaltySettings: { ...shop.loyaltySettings, pointsPerRupee: Number(e.target.value) } })}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                <p className="text-xs text-gray-400 mt-1">e.g. 1 = ₹1 earns 1 point</p>
+                <p className="text-xs text-gray-400 mt-1">e.g. 1 = â‚¹1 earns 1 point</p>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Points for ₹1 discount</label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Points for â‚¹1 discount</label>
                 <input type="number" min="1"
                   value={shop.loyaltySettings?.redemptionRate ?? 100}
                   onChange={e => setShop({ ...shop, loyaltySettings: { ...shop.loyaltySettings, redemptionRate: Number(e.target.value) } })}
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                <p className="text-xs text-gray-400 mt-1">e.g. 100 = 100 points = ₹1 off</p>
+                <p className="text-xs text-gray-400 mt-1">e.g. 100 = 100 points = â‚¹1 off</p>
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Min points to redeem</label>
@@ -165,7 +165,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 text-xs text-orange-700">
-              💡 <strong>Default:</strong> ₹1 spent = 1 point · 100 points = ₹1 off · Max 20% of order
+              ðŸ’¡ <strong>Default:</strong> â‚¹1 spent = 1 point Â· 100 points = â‚¹1 off Â· Max 20% of order
             </div>
           </div>
 
@@ -175,7 +175,7 @@ export default function SettingsPage() {
               <h2 className="font-bold text-gray-900">SMS Notifications (MSG91)</h2>
               <p className="text-xs text-gray-400 mt-1">
                 Customers get SMS when order is placed, confirmed, and delivered.{' '}
-                <a href="https://msg91.com" target="_blank" rel="noreferrer" className="text-orange-500 hover:underline">Get your Auth Key at msg91.com →</a>
+                <a href="https://msg91.com" target="_blank" rel="noreferrer" className="text-orange-500 hover:underline">Get your Auth Key at msg91.com â†’</a>
               </p>
             </div>
 
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                 onChange={e => setShop({ ...shop, smsSettings: { ...shop.smsSettings, msg91AuthKey: e.target.value } })}
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 font-mono"
               />
-              <p className="text-xs text-gray-400 mt-1">Found in MSG91 → API → Auth Key</p>
+              <p className="text-xs text-gray-400 mt-1">Found in MSG91 â†’ API â†’ Auth Key</p>
             </div>
 
             <div>
@@ -203,9 +203,9 @@ export default function SettingsPage() {
             </div>
 
             <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 text-xs text-orange-700 space-y-1">
-              <div className="font-semibold mb-2">📋 Setup steps:</div>
+              <div className="font-semibold mb-2">ðŸ“‹ Setup steps:</div>
               <div>1. Register at msg91.com and add credits</div>
-              <div>2. Go to <strong>DLT Registration</strong> → register your entity and templates</div>
+              <div>2. Go to <strong>DLT Registration</strong> â†’ register your entity and templates</div>
               <div>3. Create SMS templates for: order placed, confirmed, packed, out for delivery, delivered, cancelled, OTP</div>
               <div>4. Paste Auth Key above and save</div>
               <div>5. Paste each Template ID in your backend <code>.env</code> file (MSG91_TPL_*)</div>

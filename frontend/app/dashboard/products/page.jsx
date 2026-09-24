@@ -202,12 +202,12 @@ export default function ProductsPage() {
   const isLowStock = (p) => p.stock <= p.lowStockAlert;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', width: '100%' }}>
 
       <Sidebar />
 
       {/* Main */}
-      <div className="flex-1 flex flex-col">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
 
         {/* Top bar */}
         <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between gap-3 flex-wrap">

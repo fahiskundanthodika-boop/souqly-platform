@@ -3,13 +3,17 @@ import { useEffect } from 'react';
 
 export default function DashboardLayout({ children }) {
   useEffect(() => {
-    document.body.style.background = '#f9fafb';
-    document.body.style.color = '#111827';
+    document.body.style.cssText = 'background:#f9fafb !important;color:#111827 !important;';
+    document.documentElement.style.cssText = 'background:#f9fafb !important;';
     return () => {
-      document.body.style.background = '';
-      document.body.style.color = '';
+      document.body.style.cssText = '';
+      document.documentElement.style.cssText = '';
     };
   }, []);
 
-  return <>{children}</>;
+  return (
+    <div style={{ minHeight: '100vh', background: '#f9fafb', color: '#111827', display: 'flex' }}>
+      {children}
+    </div>
+  );
 }

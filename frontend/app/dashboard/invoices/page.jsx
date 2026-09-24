@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useState, useEffect } from 'react';
 
@@ -26,7 +26,7 @@ export default function InvoicesPage() {
   useEffect(() => { fetchInvoices(page); }, [page]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex"><Sidebar /><div className="flex-1 overflow-auto p-6">
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }}><Sidebar /><div className="flex-1 overflow-auto p-6">
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ margin: '0 0 4px' }}>Invoices</h1>
         <p style={{ margin: 0, color: '#666', fontSize: 14 }}>{total} GST invoices generated</p>
@@ -36,7 +36,7 @@ export default function InvoicesPage() {
         <p style={{ color: '#999' }}>Loading invoices...</p>
       ) : invoices.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}>
-          <div style={{ fontSize: 52, marginBottom: 12 }}>🧾</div>
+          <div style={{ fontSize: 52, marginBottom: 12 }}>ðŸ§¾</div>
           <p style={{ fontWeight: 600, fontSize: 18, color: '#555', margin: '0 0 6px' }}>No invoices yet</p>
           <p style={{ margin: 0 }}>Open any order and click the Invoice button to generate one.</p>
         </div>
@@ -56,13 +56,13 @@ export default function InvoicesPage() {
                   <tr key={inv._id} style={{ borderBottom: i < invoices.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
                     <td style={{ padding: '12px 16px', fontWeight: 700, color: '#FF6B35' }}>{inv.invoiceNumber}</td>
                     <td style={{ padding: '12px 16px', color: '#555' }}>
-                      #{inv.orderId?.orderId || '—'}
+                      #{inv.orderId?.orderId || 'â€”'}
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontWeight: 500 }}>{inv.buyerName}</div>
                       <div style={{ fontSize: 12, color: '#9ca3af' }}>{inv.buyerPhone}</div>
                     </td>
-                    <td style={{ padding: '12px 16px', fontWeight: 600 }}>₹{inv.grandTotal?.toLocaleString('en-IN')}</td>
+                    <td style={{ padding: '12px 16px', fontWeight: 600 }}>â‚¹{inv.grandTotal?.toLocaleString('en-IN')}</td>
                     <td style={{ padding: '12px 16px', color: '#6b7280', fontSize: 13 }}>
                       {new Date(inv.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
@@ -72,7 +72,7 @@ export default function InvoicesPage() {
                           style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 8, padding: '5px 12px', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}>
                           Download
                         </a>
-                      ) : '—'}
+                      ) : 'â€”'}
                     </td>
                   </tr>
                 ))}

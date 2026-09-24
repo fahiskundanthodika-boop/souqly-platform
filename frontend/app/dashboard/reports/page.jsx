@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import Sidebar from '../../../components/Sidebar';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -90,14 +90,14 @@ export default function ReportsPage() {
   }
 
   const kpis = data ? [
-    { label: 'Total Orders',    value: data.totalOrders,                      icon: '📦', sub: `${data.cancelledOrders} cancelled` },
-    { label: 'Net Revenue',     value: `₹${data.revenue.toLocaleString('en-IN')}`, icon: '💰', sub: `Avg ₹${data.avgOrderValue}/order` },
-    { label: 'Delivery Revenue',value: `₹${data.deliveryRevenue.toLocaleString('en-IN')}`, icon: '🛵', sub: `₹${data.totalDiscount.toLocaleString('en-IN')} discounted` },
-    { label: 'New Customers',   value: data.newCustomers,                     icon: '👤', sub: 'in this period' },
+    { label: 'Total Orders',    value: data.totalOrders,                      icon: 'ðŸ“¦', sub: `${data.cancelledOrders} cancelled` },
+    { label: 'Net Revenue',     value: `â‚¹${data.revenue.toLocaleString('en-IN')}`, icon: 'ðŸ’°', sub: `Avg â‚¹${data.avgOrderValue}/order` },
+    { label: 'Delivery Revenue',value: `â‚¹${data.deliveryRevenue.toLocaleString('en-IN')}`, icon: 'ðŸ›µ', sub: `â‚¹${data.totalDiscount.toLocaleString('en-IN')} discounted` },
+    { label: 'New Customers',   value: data.newCustomers,                     icon: 'ðŸ‘¤', sub: 'in this period' },
   ] : [];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex"><Sidebar /><div style={{ padding: '24px', maxWidth: 960, flex: 1, overflowY: 'auto' }}>
+    <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }}><Sidebar /><div style={{ padding: '24px', maxWidth: 960, flex: 1, overflowY: 'auto' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
@@ -131,7 +131,7 @@ export default function ReportsPage() {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: '#9ca3af' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>ðŸ“Š</div>
           <p>Loading report...</p>
         </div>
       ) : data && (
@@ -156,7 +156,7 @@ export default function ReportsPage() {
               <BarChart data={data.dailyChart} />
               {data.dailyChart?.length > 0 && (
                 <div style={{ marginTop: 12, display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6b7280' }}>
-                  <span>Peak: ₹{Math.max(...data.dailyChart.map(d => d.revenue)).toLocaleString('en-IN')}</span>
+                  <span>Peak: â‚¹{Math.max(...data.dailyChart.map(d => d.revenue)).toLocaleString('en-IN')}</span>
                   <span>{data.dailyChart.length} days with orders</span>
                 </div>
               )}
@@ -218,7 +218,7 @@ export default function ReportsPage() {
                     <span style={{ color: '#4b5563', textTransform: 'capitalize' }}>{p._id?.replace(/_/g, ' ')}</span>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontWeight: 700, color: '#111827' }}>{p.count} orders</span>
-                      <span style={{ color: '#9ca3af', marginLeft: 8 }}>₹{p.total.toLocaleString('en-IN')}</span>
+                      <span style={{ color: '#9ca3af', marginLeft: 8 }}>â‚¹{p.total.toLocaleString('en-IN')}</span>
                     </div>
                   </div>
                 ))}
@@ -231,13 +231,13 @@ export default function ReportsPage() {
       {/* Export Section */}
       <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, padding: 20 }}>
         <div style={{ fontWeight: 700, fontSize: 15, color: '#111827', marginBottom: 4 }}>Export Data</div>
-        <p style={{ color: '#6b7280', fontSize: 13, margin: '0 0 16px' }}>Download CSV files — open in Excel, Google Sheets, or any spreadsheet app</p>
+        <p style={{ color: '#6b7280', fontSize: 13, margin: '0 0 16px' }}>Download CSV files â€” open in Excel, Google Sheets, or any spreadsheet app</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
           {[
-            { type: 'orders',    label: 'Orders Report',    icon: '📦', desc: `All orders ${range.from} → ${range.to}` },
-            { type: 'revenue',   label: 'Revenue Summary',  icon: '💰', desc: `Daily revenue breakdown` },
-            { type: 'products',  label: 'Product Sales',    icon: '🛒', desc: `Units sold per product` },
-            { type: 'customers', label: 'Customer List',    icon: '👥', desc: `All customers (all time)` },
+            { type: 'orders',    label: 'Orders Report',    icon: 'ðŸ“¦', desc: `All orders ${range.from} â†’ ${range.to}` },
+            { type: 'revenue',   label: 'Revenue Summary',  icon: 'ðŸ’°', desc: `Daily revenue breakdown` },
+            { type: 'products',  label: 'Product Sales',    icon: 'ðŸ›’', desc: `Units sold per product` },
+            { type: 'customers', label: 'Customer List',    icon: 'ðŸ‘¥', desc: `All customers (all time)` },
           ].map(({ type, label, icon, desc }) => (
             <button key={type} onClick={() => download(type)} disabled={downloading === type}
               style={{
@@ -248,11 +248,11 @@ export default function ReportsPage() {
                 cursor: downloading === type ? 'not-allowed' : 'pointer',
                 textAlign: 'left', transition: 'all 0.15s'
               }}>
-              <div style={{ fontSize: 24 }}>{downloading === type ? '⏳' : icon}</div>
+              <div style={{ fontSize: 24 }}>{downloading === type ? 'â³' : icon}</div>
               <div style={{ fontWeight: 700, fontSize: 14, color: '#111827' }}>{label}</div>
               <div style={{ fontSize: 12, color: '#6b7280' }}>{desc}</div>
               <div style={{ fontSize: 12, fontWeight: 600, color: downloading === type ? '#9ca3af' : primary, marginTop: 2 }}>
-                {downloading === type ? 'Downloading...' : '↓ Download CSV'}
+                {downloading === type ? 'Downloading...' : 'â†“ Download CSV'}
               </div>
             </button>
           ))}

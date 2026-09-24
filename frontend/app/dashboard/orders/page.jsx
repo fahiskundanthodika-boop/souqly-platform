@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import Sidebar from '../../../components/Sidebar';
 
@@ -503,7 +503,7 @@ export default function OrdersPage() {
         .new-order-flash { animation: orderFlash 0.7s ease-in-out 3; }
       `}</style>
 
-      <div className="min-h-screen flex" style={{ background: "#080808" }}>
+      <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }} style={{ background: "#080808" }}>
         <Sidebar />
         <div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
 
@@ -605,5 +605,6 @@ export default function OrdersPage() {
     </>
   );
 }
+
 
 
