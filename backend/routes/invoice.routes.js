@@ -98,12 +98,12 @@ router.post('/generate/:orderId', protect, async (req, res) => {
   }
 });
 
-// GET /api/invoices/pdf/:orderId - Stream PDF directly (no Cloudinary needed)
-router.get('/pdf/:orderId', protect, async (req, res) => {
+// GET /api/invoices/pdf/:orderId - Stream PDF directly (public, orderId is unguessable)
+router.get('/pdf/:orderId', async (req, res) => {
   try {
-    const order = await Order.findOne({ _id: req.params.orderId, shopId: req.shop._id });
+    const order = await Order.findById(req.params.orderId).populate('shopId');
     if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
-    const shop = await Shop.findById(req.shop._id);
+    const shop = order.shopId;
     const pdfBuffer = await generateInvoicePDF(order, shop);
     const shopCode = shop.slug?.toUpperCase().slice(0, 4) || 'SHOP';
     res.setHeader('Content-Type', 'application/pdf');
