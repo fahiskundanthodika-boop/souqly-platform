@@ -51,10 +51,17 @@ router.post('/generate/:orderId', protect, async (req, res) => {
 
     const shop = await Shop.findById(req.shop._id);
 
-    // Return existing invoice if already generated
+    // Return existing invoice — but regenerate if pdfUrl points to Cloudinary (broken)
     const existing = await Invoice.findOne({ orderId: order._id });
     if (existing) {
-      return res.json({ success: true, invoice: existing, message: 'Invoice already exists.' });
+      const BACKEND = process.env.BACKEND_URL || 'https://yes-production-4a9f.up.railway.app';
+      const newPdfUrl = `${BACKEND}/api/invoices/pdf/${order._id}`;
+      if (existing.pdfUrl && existing.pdfUrl.includes('cloudinary.com')) {
+        existing.pdfUrl = newPdfUrl;
+        await existing.save();
+        await Order.findByIdAndUpdate(order._id, { invoiceUrl: newPdfUrl });
+      }
+      return res.json({ success: true, invoice: existing, message: 'Invoice ready.' });
     }
 
     const shopCode = shop.slug?.toUpperCase().slice(0, 4) || 'SHOP';
