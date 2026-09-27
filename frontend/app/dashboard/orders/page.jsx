@@ -352,9 +352,8 @@ export default function OrdersPage() {
   const [newOrderIds, setNewOrderIds] = useState(new Set());
 
   const getToken = () => {
-    if (typeof document === 'undefined') return null;
-    const match = document.cookie.match(/souqly_token=([^;]+)/);
-    return match ? match[1] : null;
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('ownerToken');
   };
 
   const authHeaders = () => {
@@ -503,9 +502,9 @@ export default function OrdersPage() {
         .new-order-flash { animation: orderFlash 0.7s ease-in-out 3; }
       `}</style>
 
-      <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }} style={{ background: "#080808" }}>
+      <div style={{ minHeight: "100vh", background: "#f9fafb", display: "flex", width: "100%" }}>
         <Sidebar />
-        <div className="flex-1 overflow-auto" style={{ background: "#080808" }}>
+        <div style={{ flex: 1, overflow: 'auto', background: "#f9fafb" }}>
 
         {/* Header */}
         <div className="bg-white border-b border-gray-100 px-6 pt-6 pb-4">
