@@ -107,7 +107,7 @@ router.get('/pdf/:orderId', async (req, res) => {
     const pdfBuffer = await generateInvoicePDF(order, shop);
     const shopCode = shop.slug?.toUpperCase().slice(0, 4) || 'SHOP';
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="INV-${shopCode}-${order.orderId}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="INV-${shopCode}-${order.orderId}.pdf"`);
     res.send(pdfBuffer);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
