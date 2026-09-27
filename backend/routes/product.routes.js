@@ -17,11 +17,21 @@ try {
 
 // ─── PUBLIC ROUTES (no login needed) ───────────────────────────────
 
-// GET /api/products/public/:shopId - Customer store product list
+// GET /api/products/public/:shopId - Customer store product list (shopId OR slug)
 router.get('/public/:shopId', async (req, res) => {
   try {
     const { search, category } = req.query;
-    let query = { shopId: req.params.shopId, isAvailable: true };
+    const Shop = require('../models/Shop');
+
+    // Resolve slug → ObjectId if needed
+    let shopId = req.params.shopId;
+    if (!/^[0-9a-fA-F]{24}$/.test(shopId)) {
+      const shop = await Shop.findOne({ slug: shopId }).select('_id');
+      if (!shop) return res.json({ success: true, products: [] });
+      shopId = shop._id;
+    }
+
+    let query = { shopId, isAvailable: true };
     if (search) query.name = { $regex: search, $options: 'i' };
     if (category) query.category = category;
 
