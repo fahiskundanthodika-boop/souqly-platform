@@ -57,17 +57,11 @@ router.post('/generate/:orderId', protect, async (req, res) => {
       return res.json({ success: true, invoice: existing, message: 'Invoice already exists.' });
     }
 
-    // Generate invoice number: INV-SHOPCODE-ORDERID
     const shopCode = shop.slug?.toUpperCase().slice(0, 4) || 'SHOP';
     const invoiceNumber = `INV-${shopCode}-${order.orderId}`;
+    const BACKEND = process.env.BACKEND_URL || 'https://yes-production-4a9f.up.railway.app';
+    const pdfUrl = `${BACKEND}/api/invoices/pdf/${order._id}`;
 
-    // Build PDF
-    const pdfBuffer = await generateInvoicePDF(order, shop);
-
-    // Upload to Cloudinary
-    const pdfUrl = await uploadPDF(pdfBuffer, `${invoiceNumber}-${Date.now()}`);
-
-    // Save invoice record
     const invoice = await Invoice.create({
       shopId: shop._id,
       orderId: order._id,
@@ -79,13 +73,8 @@ router.post('/generate/:orderId', protect, async (req, res) => {
       buyerPhone: order.customerPhone,
       buyerAddress: order.customerAddress || '',
       items: order.items.map(i => ({
-        name: i.name,
-        qty: i.qty,
-        price: i.price,
-        hsnCode: '',
-        gstRate: 0,
-        gstAmount: 0,
-        total: i.total,
+        name: i.name, qty: i.qty, price: i.price,
+        hsnCode: '', gstRate: 0, gstAmount: 0, total: i.total,
       })),
       subtotal: order.subtotal,
       totalGST: 0,
@@ -95,10 +84,24 @@ router.post('/generate/:orderId', protect, async (req, res) => {
       pdfUrl,
     });
 
-    // Save PDF URL back to order
     await Order.findByIdAndUpdate(order._id, { invoiceUrl: pdfUrl });
-
     res.json({ success: true, invoice, message: 'Invoice generated!' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// GET /api/invoices/pdf/:orderId - Stream PDF directly (no Cloudinary needed)
+router.get('/pdf/:orderId', protect, async (req, res) => {
+  try {
+    const order = await Order.findOne({ _id: req.params.orderId, shopId: req.shop._id });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found.' });
+    const shop = await Shop.findById(req.shop._id);
+    const pdfBuffer = await generateInvoicePDF(order, shop);
+    const shopCode = shop.slug?.toUpperCase().slice(0, 4) || 'SHOP';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="INV-${shopCode}-${order.orderId}.pdf"`);
+    res.send(pdfBuffer);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
