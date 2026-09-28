@@ -8,7 +8,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 // Empty form template
 const emptyForm = {
   name: '', description: '', price: '', mrp: '',
-  category: '', unit: 'piece', stock: '100',
+  category: '', subcategory: '', unit: 'piece', stock: '100',
   hsnCode: '', gstRate: '0', isAvailable: true
 };
 
@@ -74,6 +74,7 @@ export default function ProductsPage() {
       price: String(product.price || ''),
       mrp: String(product.mrp || ''),
       category: product.category || '',
+      subcategory: product.subcategory || '',
       unit: product.unit || 'piece',
       stock: String(product.stock ?? 100),
       hsnCode: product.hsnCode || '',
@@ -442,7 +443,7 @@ export default function ProductsPage() {
                 </div>
               </div>
 
-              {/* Category + Unit */}
+              {/* Category + Subcategory */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
@@ -450,6 +451,16 @@ export default function ProductsPage() {
                     placeholder="e.g. Vegetables, Drinks"
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Subcategory</label>
+                  <input value={form.subcategory} onChange={e => setForm({...form, subcategory: e.target.value})}
+                    placeholder="e.g. Leafy Greens, Juices"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+                </div>
+              </div>
+
+              {/* Unit */}
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Unit</label>
                   <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})}
@@ -459,6 +470,7 @@ export default function ProductsPage() {
                     ))}
                   </select>
                 </div>
+                <div></div>
               </div>
 
               {/* Stock */}

@@ -240,21 +240,14 @@ export default function StorePage() {
             <p style={{ color: '#999', fontSize: 13, margin: 0 }}>{search ? `No results for "${search}"` : 'This store has no products yet'}</p>
           </div>
         ) : (
-          <>
-            <p style={{ fontSize: 12, color: '#999', margin: '0 0 10px' }}>{products.length} items</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {products.map(product => (
-                <ProductCard
-                  key={product._id}
-                  product={product}
-                  qty={cart[product._id] || 0}
-                  primary={primaryColor}
-                  onAdd={() => addToCart(product)}
-                  onRemove={() => removeFromCart(product._id)}
-                />
-              ))}
-            </div>
-          </>
+          <ProductSections
+            products={products}
+            activeCategory={activeCategory}
+            cart={cart}
+            primary={primaryColor}
+            onAdd={addToCart}
+            onRemove={removeFromCart}
+          />
         )}
       </div>
 
@@ -273,6 +266,73 @@ export default function StorePage() {
         </div>
       )}
     </div>
+  );
+}
+
+function ProductSections({ products, activeCategory, cart, primary, onAdd, onRemove }) {
+  const [activeSubcat, setActiveSubcat] = useState({});
+
+  // Group by category
+  const grouped = {};
+  products.forEach(p => {
+    const cat = p.category || 'General';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(p);
+  });
+
+  return (
+    <>
+      {Object.entries(grouped).map(([cat, items]) => {
+        // Get unique subcategories in this category
+        const subcats = [...new Set(items.map(p => p.subcategory).filter(Boolean))];
+        const activeSub = activeSubcat[cat] || 'all';
+        const filtered = activeSub === 'all' ? items : items.filter(p => p.subcategory === activeSub);
+
+        return (
+          <div key={cat} style={{ marginBottom: 24 }}>
+            {/* Category header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 20 }}>{getCatEmoji(cat)}</span>
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>{cat}</h2>
+              <span style={{ fontSize: 12, color: '#999', marginLeft: 2 }}>({items.length})</span>
+            </div>
+
+            {/* Subcategory pills */}
+            {subcats.length > 0 && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 10, overflowX: 'auto', scrollbarWidth: 'none' }}>
+                {['all', ...subcats].map(sub => {
+                  const active = activeSub === sub;
+                  return (
+                    <button key={sub} onClick={() => setActiveSubcat(s => ({ ...s, [cat]: sub }))} style={{
+                      flexShrink: 0, padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+                      background: active ? primary : '#fff',
+                      color: active ? '#fff' : '#555',
+                      border: active ? `1.5px solid ${primary}` : '1.5px solid #e0e0e0',
+                    }}>
+                      {sub === 'all' ? 'All' : sub}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Products grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {filtered.map(product => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  qty={cart[product._id] || 0}
+                  primary={primary}
+                  onAdd={() => onAdd(product)}
+                  onRemove={() => onRemove(product._id)}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </>
   );
 }
 

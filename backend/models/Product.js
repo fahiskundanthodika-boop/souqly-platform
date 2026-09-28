@@ -17,6 +17,7 @@ const ProductSchema = new mongoose.Schema({
 
   // Categorization
   category: { type: String, default: 'General' },
+  subcategory: { type: String, default: '' },
   unit: { type: String, default: 'piece' }, // e.g. kg, litre, piece
 
   // Inventory
