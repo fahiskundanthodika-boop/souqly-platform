@@ -398,7 +398,7 @@ function ProductCard({ product, qty, primary, onAdd, onRemove, promoResult }) {
         )}
         {!promoResult && mrpDiscount > 0 && (
           <span style={{ position: 'absolute', top: 8, left: 8, background: '#256fef', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6 }}>
-            {mprDiscount}% OFF
+            {mrpDiscount}% OFF
           </span>
         )}
       </div>
