@@ -39,7 +39,34 @@ export default function StorePage() {
   const [notFound, setNotFound] = useState(false);
   const [banners, setBanners] = useState([]);
   const [heroIdx, setHeroIdx] = useState(0);
+  const [promotions, setPromotions] = useState([]);
   const searchRef = useRef();
+
+  // Apply active promotions to a product — returns { salePrice, saved, badge, promo }
+  function applyPromotion(product) {
+    for (const promo of promotions) {
+      const t = promo.target;
+      const matches =
+        t.type === 'all' ||
+        (t.type === 'category' && t.category === product.category) ||
+        (t.type === 'products' && t.productIds?.includes(product._id));
+      if (!matches) continue;
+
+      const d = promo.discount;
+      if (d.type === 'percent') {
+        const salePrice = Math.round(product.price * (1 - d.value / 100));
+        return { salePrice, saved: product.price - salePrice, badge: `${d.value}% OFF`, promo };
+      }
+      if (d.type === 'flat') {
+        const salePrice = Math.max(0, product.price - d.value);
+        return { salePrice, saved: d.value, badge: `₹${d.value} OFF`, promo };
+      }
+      if (d.type === 'bogo') {
+        return { salePrice: product.price, saved: 0, badge: `Buy ${d.buyQty} Get ${d.getQty} Free`, promo };
+      }
+    }
+    return null;
+  }
 
   const primaryColor = shop?.primaryColor || '#0c831f';
 
@@ -64,6 +91,15 @@ export default function StorePage() {
       .then(d => { if (d.success) setBanners(d.banners); })
       .catch(() => {});
   }, [shopSlug]);
+
+  // Fetch active promotions once shop is loaded
+  useEffect(() => {
+    if (!shop?._id) return;
+    fetch(`${API}/promotions/active?shopId=${shop._id}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setPromotions(d.promotions); })
+      .catch(() => {});
+  }, [shop]);
 
   const heroBanners = banners.filter(b => b.type === 'hero');
   useEffect(() => {
@@ -247,6 +283,7 @@ export default function StorePage() {
             primary={primaryColor}
             onAdd={addToCart}
             onRemove={removeFromCart}
+            applyPromotion={applyPromotion}
           />
         )}
       </div>
@@ -269,7 +306,7 @@ export default function StorePage() {
   );
 }
 
-function ProductSections({ products, activeCategory, cart, primary, onAdd, onRemove }) {
+function ProductSections({ products, activeCategory, cart, primary, onAdd, onRemove, applyPromotion }) {
   const [activeSubcat, setActiveSubcat] = useState({});
 
   // Group by category
@@ -324,6 +361,7 @@ function ProductSections({ products, activeCategory, cart, primary, onAdd, onRem
                   product={product}
                   qty={cart[product._id] || 0}
                   primary={primary}
+                  promoResult={applyPromotion ? applyPromotion(product) : null}
                   onAdd={() => onAdd(product)}
                   onRemove={() => onRemove(product._id)}
                 />
@@ -336,21 +374,31 @@ function ProductSections({ products, activeCategory, cart, primary, onAdd, onRem
   );
 }
 
-function ProductCard({ product, qty, primary, onAdd, onRemove }) {
-  const discount = product.mrp && product.mrp > product.price
+function ProductCard({ product, qty, primary, onAdd, onRemove, promoResult }) {
+  const mrpDiscount = product.mrp && product.mrp > product.price
     ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0;
 
+  // Promotion takes priority over MRP discount
+  const displayPrice = promoResult ? promoResult.salePrice : product.price;
+  const strikePrice  = promoResult ? product.price : (product.mrp && product.mrp > product.price ? product.mrp : null);
+  const badge        = promoResult ? promoResult.badge : (mrpDiscount > 0 ? `${mrpDiscount}% OFF` : null);
+
   return (
-    <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', border: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', border: promoResult ? '2px solid #fde68a' : '1px solid #f0f0f0', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {/* Image area */}
       <div style={{ position: 'relative', background: '#f7f8fa', height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {product.image
           ? <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
           : <span style={{ fontSize: 44 }}>{getCatEmoji(product.category)}</span>
         }
-        {discount > 0 && (
+        {promoResult && (
+          <span style={{ position: 'absolute', top: 8, left: 8, background: '#dc2626', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6 }}>
+            🏷️ {promoResult.badge}
+          </span>
+        )}
+        {!promoResult && mrpDiscount > 0 && (
           <span style={{ position: 'absolute', top: 8, left: 8, background: '#256fef', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6 }}>
-            {discount}% OFF
+            {mprDiscount}% OFF
           </span>
         )}
       </div>
@@ -364,9 +412,9 @@ function ProductCard({ product, qty, primary, onAdd, onRemove }) {
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
           <div>
-            <span style={{ fontSize: 15, fontWeight: 800, color: '#1a1a1a' }}>₹{product.price}</span>
-            {product.mrp && product.mrp > product.price && (
-              <span style={{ fontSize: 11, color: '#bbb', textDecoration: 'line-through', marginLeft: 4 }}>₹{product.mrp}</span>
+            <span style={{ fontSize: 15, fontWeight: 800, color: promoResult ? '#dc2626' : '#1a1a1a' }}>₹{displayPrice}</span>
+            {strikePrice && (
+              <span style={{ fontSize: 11, color: '#bbb', textDecoration: 'line-through', marginLeft: 4 }}>₹{strikePrice}</span>
             )}
           </div>
 

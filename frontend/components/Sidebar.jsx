@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingBag, Package, Bike, BarChart2,
   Tag, Star, GitBranch, MessageCircle, Megaphone, FileText,
   TrendingUp, CreditCard, Settings, LogOut, Store, ChevronRight,
-  Image, Palette, Monitor
+  Image, Palette, Monitor, Zap
 } from 'lucide-react';
 
 const NAV_SECTIONS = [
@@ -42,6 +42,7 @@ const NAV_SECTIONS = [
   {
     label: 'Grow',
     items: [
+      { href: '/dashboard/promotions', label: 'Promotions',   icon: Zap },
       { href: '/dashboard/marketing', label: 'Marketing',    icon: Megaphone },
       { href: '/dashboard/whatsapp',  label: 'WhatsApp Bot', icon: MessageCircle },
       { href: '/dashboard/coupons',   label: 'Coupons',      icon: Tag },
