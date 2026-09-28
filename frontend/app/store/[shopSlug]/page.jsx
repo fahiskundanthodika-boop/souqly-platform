@@ -1,56 +1,29 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-
 import { API_URL as API } from '../../../lib/config';
-import { getThemeColors } from '../../../lib/themes';
 
-// ── Skeleton loader shown while products are loading ──────────────
-function SkeletonCard() {
-  return (
-    <div className="bg-white rounded-2xl overflow-hidden animate-pulse">
-      <div className="bg-gray-200 h-36"></div>
-      <div className="p-3 space-y-2">
-        <div className="bg-gray-200 h-3 rounded w-3/4"></div>
-        <div className="bg-gray-200 h-3 rounded w-1/2"></div>
-        <div className="bg-gray-200 h-6 rounded w-1/3 mt-2"></div>
-        <div className="bg-gray-200 h-8 rounded-xl w-full mt-2"></div>
-      </div>
-    </div>
-  );
-}
+const CATEGORY_EMOJI = {
+  vegetables: '🥦', vegitables: '🥦', vegitabke: '🥦',
+  fruits: '🍎', dairy: '🥛', milk: '🥛',
+  staples: '🌾', grains: '🌾', rice: '🌾',
+  snacks: '🍿', beverages: '🧃', drinks: '🧃',
+  meat: '🍗', chicken: '🍗', fish: '🐟',
+  bakery: '🍞', bread: '🍞',
+  sweets: '🍬', desserts: '🍰',
+  personal: '🧴', care: '🧴',
+  cleaning: '🧹', household: '🏠',
+  default: '🛒',
+};
 
-function SkeletonHeader() {
-  return (
-    <div className="animate-pulse px-4 py-5 flex items-center gap-4">
-      <div className="w-16 h-16 bg-white/30 rounded-2xl"></div>
-      <div className="space-y-2">
-        <div className="bg-white/30 h-5 w-36 rounded"></div>
-        <div className="bg-white/20 h-3 w-24 rounded"></div>
-      </div>
-    </div>
-  );
-}
-
-function useCountdown(endDate, endTime) {
-  const [remaining, setRemaining] = useState('');
-  useEffect(() => {
-    if (!endDate) return;
-    const target = new Date(`${endDate}T${endTime || '23:59'}`);
-    const tick = () => {
-      const diff = target - Date.now();
-      if (diff <= 0) { setRemaining('Ended'); return; }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setRemaining(`${h}h ${m}m ${s}s`);
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [endDate, endTime]);
-  return remaining;
+function getCatEmoji(cat) {
+  if (!cat) return '🛒';
+  const k = cat.toLowerCase();
+  for (const [key, val] of Object.entries(CATEGORY_EMOJI)) {
+    if (k.includes(key)) return val;
+  }
+  return '🛒';
 }
 
 export default function StorePage() {
@@ -66,280 +39,216 @@ export default function StorePage() {
   const [notFound, setNotFound] = useState(false);
   const [banners, setBanners] = useState([]);
   const [heroIdx, setHeroIdx] = useState(0);
-  const [themeData, setThemeData] = useState(null);
+  const searchRef = useRef();
 
-  // Load cart from localStorage
+  const primaryColor = shop?.primaryColor || '#0c831f';
+
   useEffect(() => {
     const saved = localStorage.getItem(`cart_${shopSlug}`);
-    if (saved) {
-      try { setCart(JSON.parse(saved)); } catch (e) {}
-    }
+    if (saved) { try { setCart(JSON.parse(saved)); } catch (e) {} }
   }, [shopSlug]);
 
-  // Save cart to localStorage whenever it changes
-  const saveCart = useCallback((newCart) => {
-    setCart(newCart);
-    localStorage.setItem(`cart_${shopSlug}`, JSON.stringify(newCart));
+  const saveCart = useCallback((c) => {
+    setCart(c);
+    localStorage.setItem(`cart_${shopSlug}`, JSON.stringify(c));
   }, [shopSlug]);
 
-  // Fetch shop details + banners
   useEffect(() => {
     fetch(`${API}/shop/public/${shopSlug}`)
       .then(r => r.json())
-      .then(d => {
-        if (d.success) setShop(d.shop);
-        else setNotFound(true);
-      })
+      .then(d => { if (d.success) setShop(d.shop); else setNotFound(true); })
       .catch(() => setNotFound(true))
       .finally(() => setLoadingShop(false));
-
     fetch(`${API}/banners/store/${shopSlug}`)
       .then(r => r.json())
       .then(d => { if (d.success) setBanners(d.banners); })
       .catch(() => {});
-
-    fetch(`${API}/theme/store/${shopSlug}`)
-      .then(r => r.json())
-      .then(d => { if (d.success) setThemeData(d.theme); })
-      .catch(() => {});
   }, [shopSlug]);
 
-  // Hero auto-advance
   const heroBanners = banners.filter(b => b.type === 'hero');
-  const miniBanners = banners.filter(b => b.type === 'mini');
-  const flashBanner = banners.find(b => b.type === 'flash');
   useEffect(() => {
     if (heroBanners.length <= 1) return;
     const id = setInterval(() => setHeroIdx(i => (i + 1) % heroBanners.length), 4000);
     return () => clearInterval(id);
   }, [heroBanners.length]);
 
-  // Fetch products once shop is loaded
   useEffect(() => {
     if (!shop) return;
     setLoadingProducts(true);
-
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (activeCategory !== 'all') params.set('category', activeCategory);
-
     fetch(`${API}/products/public/${shop._id}?${params}`)
       .then(r => r.json())
       .then(d => {
         if (d.success) {
           setProducts(d.products);
-          // Build category list from products
           const cats = [...new Set(d.products.map(p => p.category).filter(Boolean))];
-          setCategories(cats);
+          if (activeCategory === 'all' || !search) setCategories(cats);
         }
       })
       .catch(() => {})
       .finally(() => setLoadingProducts(false));
   }, [shop, search, activeCategory]);
 
-  // Add one item to cart
-  const addToCart = (product) => {
-    const newCart = { ...cart, [product._id]: (cart[product._id] || 0) + 1 };
-    saveCart(newCart);
-  };
+  useEffect(() => {
+    document.body.style.background = '#f2f3f7';
+    document.body.style.color = '#1a1a1a';
+    return () => { document.body.style.background = ''; document.body.style.color = ''; };
+  }, []);
 
-  // Remove one item from cart
-  const removeFromCart = (productId) => {
-    const newCart = { ...cart };
-    if (newCart[productId] > 1) newCart[productId]--;
-    else delete newCart[productId];
-    saveCart(newCart);
+  const addToCart = (p) => saveCart({ ...cart, [p._id]: (cart[p._id] || 0) + 1 });
+  const removeFromCart = (id) => {
+    const c = { ...cart };
+    if (c[id] > 1) c[id]--; else delete c[id];
+    saveCart(c);
   };
 
   const cartCount = Object.values(cart).reduce((a, b) => a + b, 0);
   const cartTotal = products.reduce((sum, p) => sum + ((cart[p._id] || 0) * p.price), 0);
 
-  // Resolve theme: DB theme → themeColors overrides → fallback to primaryColor
-  const T = getThemeColors(themeData?.theme || 'classic-white', themeData?.themeColors || {});
-  const primary = T.primary || shop?.primaryColor || '#FF6B35';
-
-  // ── Not found ──────────────────────────────────────────────────
   if (notFound) return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
-      <div className="text-6xl mb-4">🔍</div>
-      <h1 className="text-xl font-bold text-gray-900 mb-2">Store not found</h1>
-      <p className="text-gray-400 text-sm">The store link you followed doesn't exist or has been removed.</p>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center', background: '#f2f3f7' }}>
+      <div style={{ fontSize: 64, marginBottom: 16 }}>🔍</div>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Store not found</h1>
+      <p style={{ color: '#666', fontSize: 14 }}>This store doesn't exist or has been removed.</p>
     </div>
   );
 
-  // Override the dark body background set by globals.css for dashboard
-  useEffect(() => {
-    document.body.style.background = T.background;
-    document.body.style.color = T.text;
-    return () => {
-      document.body.style.background = '';
-      document.body.style.color = '';
-    };
-  }, [T.background, T.text]);
-
   return (
-    <div className="min-h-screen" style={{ background: T.background, color: T.text }}>
+    <div style={{ minHeight: '100vh', background: '#f2f3f7', fontFamily: "'Inter', -apple-system, sans-serif", paddingBottom: cartCount > 0 ? 100 : 16 }}>
 
-      {/* ── HEADER ──────────────────────────────────────────────── */}
-      <header style={{ backgroundColor: primary }} className="sticky top-0 z-30 shadow-sm">
-        {loadingShop ? <SkeletonHeader /> : (
-          <div className="px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {/* Shop logo or initial */}
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
-                  {shop?.logo
-                    ? <img src={shop.logo} alt={shop.name} className="w-full h-full object-cover" />
-                    : <span className="text-white font-bold text-xl">{shop?.name?.charAt(0)}</span>
-                  }
-                </div>
-                <div>
-                  <h1 className="text-white font-bold text-base leading-tight">{shop?.name}</h1>
-                  <p className="text-white/70 text-xs">
-                    {shop?.city} · {shop?.deliveryOptions?.selfPickupEnabled ? '🏪 Pickup · ' : ''}
-                    {shop?.deliveryOptions?.ownRiderEnabled ? '🛵 Delivery' : ''}
-                    {shop?.avgRating > 0 && ` · ⭐ ${shop.avgRating} (${shop.totalReviews})`}
-                  </p>
-                </div>
+      {/* ── HEADER ── */}
+      <header style={{ background: '#fff', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+        <div style={{ padding: '10px 16px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            {/* Location */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 18 }}>📍</span>
+              <div>
+                {loadingShop ? (
+                  <div style={{ width: 80, height: 14, background: '#eee', borderRadius: 6 }} />
+                ) : (
+                  <>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', lineHeight: 1.2 }}>{shop?.name}</div>
+                    <div style={{ fontSize: 11, color: '#888' }}>{shop?.city} · {shop?.deliveryOptions?.ownRiderEnabled ? '🛵 Delivery' : ''}{shop?.deliveryOptions?.selfPickupEnabled ? ' 🏪 Pickup' : ''}</div>
+                  </>
+                )}
               </div>
+            </div>
 
-              {/* Account icon */}
-              <Link href={`/store/${shopSlug}/account`} className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white text-xl mr-1">
-                👤
-              </Link>
-
-              {/* Cart icon */}
-              <Link href={`/store/${shopSlug}/cart`} className="relative">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white text-xl">
-                  🛒
-                </div>
+            {/* Right icons */}
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Link href={`/store/${shopSlug}/account`} style={{ width: 38, height: 38, background: '#f2f3f7', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, textDecoration: 'none' }}>👤</Link>
+              <Link href={`/store/${shopSlug}/cart`} style={{ position: 'relative', width: 38, height: 38, background: '#f2f3f7', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, textDecoration: 'none' }}>
+                🛒
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center"
-                    style={{ color: primary }}>
+                  <span style={{ position: 'absolute', top: -4, right: -4, background: primaryColor, color: '#fff', fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {cartCount > 9 ? '9+' : cartCount}
                   </span>
                 )}
               </Link>
             </div>
+          </div>
 
-            {/* Search bar */}
-            <div className="mt-3 relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search products..."
-                className="w-full bg-white rounded-xl pl-9 pr-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-            </div>
+          {/* Search bar */}
+          <div style={{ position: 'relative', marginBottom: 10 }}>
+            <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#aaa' }}>🔍</span>
+            <input
+              ref={searchRef}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={`Search in ${shop?.name || 'store'}...`}
+              style={{ width: '100%', background: '#f2f3f7', border: 'none', borderRadius: 12, padding: '10px 12px 10px 38px', fontSize: 14, color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: 16, color: '#aaa', cursor: 'pointer' }}>✕</button>
+            )}
+          </div>
+        </div>
+
+        {/* Delivery info strip */}
+        {shop && (
+          <div style={{ display: 'flex', gap: 16, padding: '6px 16px 8px', borderTop: '1px solid #f2f3f7', overflowX: 'auto' }}>
+            <span style={{ fontSize: 11, color: '#555', whiteSpace: 'nowrap' }}>🛵 Delivery ₹{shop.deliveryCharge}</span>
+            <span style={{ fontSize: 11, color: '#555', whiteSpace: 'nowrap' }}>🎁 Free above ₹{shop.freeDeliveryAbove}</span>
+            {shop.minOrderAmount > 0 && <span style={{ fontSize: 11, color: '#555', whiteSpace: 'nowrap' }}>📦 Min ₹{shop.minOrderAmount}</span>}
           </div>
         )}
       </header>
 
-      {/* ── FLASH SALE STRIP ───────────────────────────────────── */}
-      {flashBanner && <FlashStrip banner={flashBanner} />}
-
-      {/* ── HERO SLIDER ─────────────────────────────────────────── */}
+      {/* ── HERO BANNERS ── */}
       {heroBanners.length > 0 && (
-        <div style={{ position: 'relative', overflow: 'hidden', margin: '0 0 0 0' }}>
-          <div style={{ background: heroBanners[heroIdx]?.background, padding: '20px 16px', minHeight: 120, position: 'relative', overflow: 'hidden', transition: 'background 0.4s' }}>
-            <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 52, opacity: 0.18 }}>{heroBanners[heroIdx]?.emoji}</div>
-            {heroBanners[heroIdx]?.tag && (
-              <span style={{ display: 'inline-block', background: heroBanners[heroIdx].tagColor, color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 10px', borderRadius: 20, marginBottom: 6 }}>{heroBanners[heroIdx].tag}</span>
-            )}
+        <div style={{ margin: '12px 12px 0', borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ background: heroBanners[heroIdx]?.background || primaryColor, padding: '20px 16px', position: 'relative', minHeight: 110, borderRadius: 16 }}>
+            <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: 56, opacity: 0.2 }}>{heroBanners[heroIdx]?.emoji}</div>
+            {heroBanners[heroIdx]?.tag && <span style={{ background: 'rgba(0,0,0,0.2)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 10px', borderRadius: 20, display: 'inline-block', marginBottom: 6 }}>{heroBanners[heroIdx].tag}</span>}
             <div style={{ fontSize: 20, fontWeight: 800, color: '#fff', lineHeight: 1.2, marginBottom: 4 }}>{heroBanners[heroIdx]?.title}</div>
-            {heroBanners[heroIdx]?.subtitle && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>{heroBanners[heroIdx].subtitle}</div>}
-            <button style={{ marginTop: 12, background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', borderRadius: 8, padding: '7px 16px', fontSize: 12, fontWeight: 600 }}
-              onClick={() => { if (heroBanners[heroIdx]?.linkTo && heroBanners[heroIdx].linkTo !== 'all') {} }}>
-              {heroBanners[heroIdx]?.buttonText}
-            </button>
+            {heroBanners[heroIdx]?.subtitle && <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{heroBanners[heroIdx].subtitle}</div>}
           </div>
           {heroBanners.length > 1 && (
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 5, padding: '8px 0', background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 4, padding: '6px 0', background: '#fff', borderRadius: '0 0 12px 12px' }}>
               {heroBanners.map((_, i) => (
-                <button key={i} onClick={() => setHeroIdx(i)} style={{ width: i === heroIdx ? 18 : 6, height: 6, borderRadius: 3, background: i === heroIdx ? (shop?.primaryColor || '#FF6B35') : '#ddd', border: 'none', cursor: 'pointer', transition: 'all 0.3s', padding: 0 }} />
+                <button key={i} onClick={() => setHeroIdx(i)} style={{ width: i === heroIdx ? 16 : 5, height: 5, borderRadius: 3, background: i === heroIdx ? primaryColor : '#ddd', border: 'none', cursor: 'pointer', padding: 0, transition: 'all 0.3s' }} />
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* ── MINI BANNERS ────────────────────────────────────────── */}
-      {miniBanners.length > 0 && (
-        <div style={{ display: 'flex', gap: 10, padding: '10px 12px', overflowX: 'auto', background: '#fff', borderBottom: '1px solid #f3f4f6' }}>
-          {miniBanners.map(b => (
-            <div key={b._id} style={{ flexShrink: 0, width: 150, background: b.background, borderRadius: 10, padding: '12px 12px', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', right: 6, bottom: 6, fontSize: 24, opacity: 0.2 }}>{b.emoji}</div>
-              {b.tag && <span style={{ display: 'inline-block', background: b.tagColor, color: '#fff', fontSize: 9, fontWeight: 700, padding: '1px 7px', borderRadius: 20, marginBottom: 4 }}>{b.tag}</span>}
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{b.title}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── DELIVERY INFO BANNER ────────────────────────────────── */}
-      {shop && (
-        <div className="bg-white border-b border-gray-100 px-4 py-2 flex items-center gap-4 text-xs text-gray-500 overflow-x-auto">
-          <span className="whitespace-nowrap">🛵 Delivery ₹{shop.deliveryCharge}</span>
-          <span className="whitespace-nowrap">🎁 Free above ₹{shop.freeDeliveryAbove}</span>
-          {shop.minOrderAmount > 0 && <span className="whitespace-nowrap">📦 Min order ₹{shop.minOrderAmount}</span>}
-        </div>
-      )}
-
-      {/* ── CATEGORY TABS ───────────────────────────────────────── */}
+      {/* ── CATEGORY CHIPS ── */}
       {categories.length > 0 && (
-        <div className="bg-white border-b border-gray-100 px-4 py-2 overflow-x-auto">
-          <div className="flex gap-2 min-w-max">
-            {['all', ...categories].map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className="px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all"
-                style={
-                  activeCategory === cat
-                    ? { backgroundColor: primary, color: 'white' }
-                    : { backgroundColor: '#f3f4f6', color: '#555' }
-                }
-              >
-                {cat === 'all' ? 'All' : cat}
-              </button>
+        <div style={{ padding: '12px 0 0', background: 'transparent' }}>
+          <div style={{ display: 'flex', gap: 8, padding: '0 12px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {['all', ...categories].map(cat => {
+              const active = activeCategory === cat;
+              return (
+                <button key={cat} onClick={() => setActiveCategory(cat)} style={{
+                  flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                  background: active ? primaryColor : '#fff',
+                  border: active ? `2px solid ${primaryColor}` : '2px solid #e8e8e8',
+                  borderRadius: 12, padding: '8px 14px', cursor: 'pointer', transition: 'all 0.2s',
+                  minWidth: 64,
+                }}>
+                  <span style={{ fontSize: 20 }}>{cat === 'all' ? '🛍️' : getCatEmoji(cat)}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: active ? '#fff' : '#333', whiteSpace: 'nowrap' }}>{cat === 'all' ? 'All' : cat}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── PRODUCTS ── */}
+      <div style={{ padding: '12px 12px 8px' }}>
+        {loadingProducts ? (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {[...Array(6)].map((_, i) => (
+              <div key={i} style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', height: 220 }}>
+                <div style={{ height: 120, background: '#f0f0f0' }} />
+                <div style={{ padding: 10 }}>
+                  <div style={{ height: 12, background: '#f0f0f0', borderRadius: 6, marginBottom: 8, width: '70%' }} />
+                  <div style={{ height: 10, background: '#f0f0f0', borderRadius: 6, width: '40%' }} />
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* ── PRODUCTS GRID ───────────────────────────────────────── */}
-      <div className="p-4 pb-36">
-        {loadingProducts ? (
-          // Skeleton grid
-          <div className="grid grid-cols-2 gap-3">
-            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
-          </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-5xl mb-3">😕</div>
-            <p className="font-medium text-gray-700">No products found</p>
-            <p className="text-gray-400 text-sm mt-1">
-              {search ? `No results for "${search}"` : 'This store has no products yet'}
-            </p>
-            {search && (
-              <button onClick={() => setSearch('')}
-                className="mt-4 text-sm font-medium px-4 py-2 rounded-xl border-2"
-                style={{ borderColor: primary, color: primary }}>
-                Clear search
-              </button>
-            )}
+          <div style={{ textAlign: 'center', padding: '48px 16px' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>😕</div>
+            <p style={{ fontWeight: 600, color: '#444', margin: '0 0 6px' }}>No products found</p>
+            <p style={{ color: '#999', fontSize: 13, margin: 0 }}>{search ? `No results for "${search}"` : 'This store has no products yet'}</p>
           </div>
         ) : (
           <>
-            <p className="text-xs text-gray-400 mb-3">{products.length} products</p>
-            <div className="grid grid-cols-2 gap-3">
+            <p style={{ fontSize: 12, color: '#999', margin: '0 0 10px' }}>{products.length} items</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               {products.map(product => (
                 <ProductCard
                   key={product._id}
                   product={product}
                   qty={cart[product._id] || 0}
-                  primary={primary}
+                  primary={primaryColor}
                   onAdd={() => addToCart(product)}
                   onRemove={() => removeFromCart(product._id)}
                 />
@@ -349,120 +258,68 @@ export default function StorePage() {
         )}
       </div>
 
-      {/* ── STICKY CART BAR ─────────────────────────────────────── */}
+      {/* ── STICKY CART BAR ── */}
       {cartCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-100 shadow-lg z-20">
-          <Link href={`/store/${shopSlug}/cart`}>
-            <div
-              className="flex items-center justify-between px-5 py-3.5 rounded-2xl text-white font-bold shadow-lg"
-              style={{ backgroundColor: primary }}
-            >
-              <div className="bg-white/20 px-3 py-1 rounded-full text-sm">
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(8px)', borderTop: '1px solid #eee', zIndex: 50 }}>
+          <Link href={`/store/${shopSlug}/cart`} style={{ textDecoration: 'none' }}>
+            <div style={{ background: primaryColor, borderRadius: 14, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 8, padding: '4px 12px', fontSize: 13, fontWeight: 700, color: '#fff' }}>
                 {cartCount} {cartCount === 1 ? 'item' : 'items'}
               </div>
-              <span className="text-sm">View Cart →</span>
-              <span className="text-sm">₹{cartTotal}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>View Cart →</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>₹{cartTotal}</span>
             </div>
           </Link>
         </div>
       )}
-
     </div>
   );
 }
 
-// ── Flash Sale Strip ───────────────────────────────────────────────
-function FlashStrip({ banner }) {
-  const remaining = useCountdown(
-    banner.flashEndDate ? banner.flashEndDate.slice(0, 10) : null,
-    banner.flashEndTime
-  );
-  if (!remaining || remaining === 'Ended') return null;
-  return (
-    <div style={{ background: banner.background || 'linear-gradient(90deg,#7c3aed,#db2777)', padding: '8px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 16 }}>{banner.emoji}</span>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{banner.title}</div>
-          {banner.subtitle && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)' }}>{banner.subtitle}</div>}
-        </div>
-      </div>
-      <div style={{ background: 'rgba(0,0,0,0.3)', padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>
-        ⏱ {remaining}
-      </div>
-    </div>
-  );
-}
-
-// ── Product Card Component ─────────────────────────────────────────
 function ProductCard({ product, qty, primary, onAdd, onRemove }) {
   const discount = product.mrp && product.mrp > product.price
-    ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
-    : 0;
+    ? Math.round(((product.mrp - product.price) / product.mrp) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-      {/* Image */}
-      <div className="relative bg-gray-50 h-36">
+    <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', border: '1px solid #f0f0f0', display: 'flex', flexDirection: 'column' }}>
+      {/* Image area */}
+      <div style={{ position: 'relative', background: '#f7f8fa', height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {product.image
-          ? <img src={product.image} alt={product.name} className="w-full h-full object-cover" loading="lazy" />
-          : (
-            <div className="w-full h-full flex items-center justify-center text-4xl">
-              🛍️
-            </div>
-          )
+          ? <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+          : <span style={{ fontSize: 44 }}>{getCatEmoji(product.category)}</span>
         }
-        {/* Discount badge */}
         {discount > 0 && (
-          <span className="absolute top-2 left-2 text-white text-xs font-bold px-2 py-0.5 rounded-full"
-            style={{ backgroundColor: primary }}>
-            {discount}% off
+          <span style={{ position: 'absolute', top: 8, left: 8, background: '#256fef', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6 }}>
+            {discount}% OFF
           </span>
         )}
       </div>
 
       {/* Info */}
-      <div className="p-2.5">
-        <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 min-h-[2.5rem]">
+      <div style={{ padding: '10px 10px 10px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ fontSize: 11, color: '#999', marginBottom: 2 }}>{product.unit || ''}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#1a1a1a', lineHeight: 1.3, marginBottom: 6, flex: 1, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {product.name}
-        </h3>
-        <p className="text-gray-400 text-xs mt-0.5">{product.unit}</p>
-
-        {/* Price */}
-        <div className="flex items-center gap-1.5 mt-1.5">
-          <span className="font-bold text-sm" style={{ color: primary }}>₹{product.price}</span>
-          {product.mrp && product.mrp > product.price && (
-            <span className="text-gray-400 line-through text-xs">₹{product.mrp}</span>
-          )}
         </div>
 
-        {/* Add to cart / qty control */}
-        <div className="mt-2">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+          <div>
+            <span style={{ fontSize: 15, fontWeight: 800, color: '#1a1a1a' }}>₹{product.price}</span>
+            {product.mrp && product.mrp > product.price && (
+              <span style={{ fontSize: 11, color: '#bbb', textDecoration: 'line-through', marginLeft: 4 }}>₹{product.mrp}</span>
+            )}
+          </div>
+
+          {/* Add / qty control */}
           {qty === 0 ? (
-            <button
-              onClick={onAdd}
-              className="w-full py-2 rounded-xl text-white text-sm font-semibold active:scale-95 transition-transform"
-              style={{ backgroundColor: primary }}
-            >
-              Add +
+            <button onClick={onAdd} style={{ background: '#fff', border: `2px solid ${primary}`, color: primary, borderRadius: 8, padding: '5px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s' }}>
+              ADD
             </button>
           ) : (
-            <div className="flex items-center justify-between bg-gray-50 rounded-xl px-1 py-1">
-              <button
-                onClick={onRemove}
-                className="w-8 h-8 rounded-lg text-white font-bold flex items-center justify-center text-lg active:scale-90 transition-transform"
-                style={{ backgroundColor: primary }}
-              >
-                −
-              </button>
-              <span className="font-bold text-gray-900 text-sm">{qty}</span>
-              <button
-                onClick={onAdd}
-                className="w-8 h-8 rounded-lg text-white font-bold flex items-center justify-center text-lg active:scale-90 transition-transform"
-                style={{ backgroundColor: primary }}
-              >
-                +
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: primary, borderRadius: 8, padding: '3px 6px' }}>
+              <button onClick={onRemove} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}>−</button>
+              <span style={{ color: '#fff', fontWeight: 700, fontSize: 13, minWidth: 16, textAlign: 'center' }}>{qty}</span>
+              <button onClick={onAdd} style={{ background: 'none', border: 'none', color: '#fff', fontSize: 18, fontWeight: 700, cursor: 'pointer', lineHeight: 1, padding: '0 2px' }}>+</button>
             </div>
           )}
         </div>
