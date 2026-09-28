@@ -238,9 +238,9 @@ export default function ProductsPage() {
   };
 
   const downloadTemplate = () => {
-    const token = localStorage.getItem('ownerToken');
     const a = document.createElement('a');
     a.href = `${API}/products/template`;
+    a.download = 'souqly-products-template.xlsx';
     a.click();
   };
 

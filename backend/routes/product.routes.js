@@ -230,7 +230,7 @@ router.post('/bulk-upload', protect, memUpload.single('file'), async (req, res) 
 });
 
 // GET /api/products/template - Download sample Excel template
-router.get('/template', protect, (req, res) => {
+router.get('/template', (req, res) => {
   const XLSX = require('xlsx');
   const data = [
     { Name: 'White Bread', Price: 45, MRP: 50, Category: 'Breads', Unit: 'piece', Stock: 100, Description: 'Fresh white bread' },
