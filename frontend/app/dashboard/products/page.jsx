@@ -246,6 +246,10 @@ export default function ProductsPage() {
 
   const isLowStock = (p) => p.stock <= p.lowStockAlert;
 
+  // Shared modal input/label styles
+  const lbl = { display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 };
+  const inp = { width: '100%', border: '1px solid #e5e7eb', borderRadius: 8, padding: '9px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box', color: '#111827', background: '#fff' };
+
   return (
     <div style={{ minHeight: '100vh', background: '#f9fafb', display: 'flex', width: '100%' }}>
 
@@ -422,171 +426,150 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* "" ADD / EDIT MODAL """"""""""""""""""""""""""""" */}
+      {/* ADD / EDIT MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
 
-            {/* Modal header */}
-            <div className="flex items-center justify-between p-5 border-b border-gray-100">
-              <h2 className="font-bold text-gray-900 text-lg">
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 20px', borderBottom: '1px solid #f3f4f6' }}>
+              <h2 style={{ margin: 0, fontWeight: 700, fontSize: 17, color: '#111827' }}>
                 {editProduct ? 'Edit Product' : 'Add New Product'}
               </h2>
               <button onClick={() => setShowModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400">
-                
+                style={{ width: 32, height: 32, borderRadius: '50%', border: 'none', background: '#f3f4f6', cursor: 'pointer', fontSize: 16, color: '#6b7280', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                ✕
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-5 space-y-4">
+            <form onSubmit={handleSubmit} style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
               {/* Error */}
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
-                   {error}
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', borderRadius: 10, padding: '10px 14px', fontSize: 13 }}>
+                  ⚠ {error}
                 </div>
               )}
 
               {/* Image upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-                <div
-                  onClick={() => fileRef.current.click()}
-                  className="border-2 border-dashed border-gray-200 rounded-xl h-32 flex items-center justify-center cursor-pointer hover:border-orange-300 hover:bg-orange-50 transition-colors overflow-hidden">
+                <label style={lbl}>Product Image</label>
+                <div onClick={() => fileRef.current.click()}
+                  style={{ border: '2px dashed #e5e7eb', borderRadius: 12, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', background: '#fafafa' }}>
                   {imagePreview
-                    ? <img src={imagePreview} className="w-full h-full object-cover" alt="preview" />
-                    : (
-                      <div className="text-center">
-                        <div className="text-3xl mb-1"></div>
-                        <p className="text-gray-400 text-xs">Click to upload image</p>
-                        <p className="text-gray-300 text-xs">JPG, PNG, WebP  Max 5MB</p>
+                    ? <img src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="preview" />
+                    : <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 28, marginBottom: 4 }}>📷</div>
+                        <p style={{ margin: 0, color: '#9ca3af', fontSize: 12 }}>Click to upload image</p>
+                        <p style={{ margin: 0, color: '#d1d5db', fontSize: 11 }}>JPG, PNG, WebP · Max 5MB</p>
                       </div>
-                    )
                   }
                 </div>
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} className="hidden" />
+                <input ref={fileRef} type="file" accept="image/*" onChange={handleImage} style={{ display: 'none' }} />
               </div>
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Product Name *</label>
+                <label style={lbl}>Product Name *</label>
                 <input value={form.name} onChange={e => setForm({...form, name: e.target.value})}
                   placeholder="e.g. Fresh Tomatoes, Chicken Biryani"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-                  required />
+                  style={inp} required />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description</label>
+                <label style={lbl}>Description</label>
                 <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})}
-                  placeholder="Short description of the product (optional)"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-                  rows={2} />
+                  placeholder="Short description (optional)"
+                  style={{ ...inp, resize: 'vertical', minHeight: 64 }} rows={2} />
               </div>
 
               {/* Price + MRP */}
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Selling Price () *</label>
+                  <label style={lbl}>Selling Price (₹) *</label>
                   <input type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})}
-                    placeholder="0"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-                    required min="0" />
+                    placeholder="0" style={inp} required min="0" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">MRP () <span className="text-gray-400 font-normal">crossed</span></label>
+                  <label style={lbl}>MRP (₹) <span style={{ color: '#9ca3af', fontWeight: 400 }}>crossed out</span></label>
                   <input type="number" value={form.mrp} onChange={e => setForm({...form, mrp: e.target.value})}
-                    placeholder="0"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-                    min="0" />
+                    placeholder="0" style={inp} min="0" />
                 </div>
               </div>
 
               {/* Category + Subcategory */}
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-                  <select value={form.category} onChange={e => { setForm({...form, category: e.target.value, subcategory: ''}); setCustomCategory(''); setCustomSubcategory(''); }}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-                    <option value="">-- Select Category --</option>
+                  <label style={lbl}>Category</label>
+                  <select value={form.category} onChange={e => { setForm({...form, category: e.target.value, subcategory: ''}); setCustomCategory(''); setCustomSubcategory(''); }} style={inp}>
+                    <option value="">-- Select --</option>
                     {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     <option value="__custom__">+ Custom...</option>
                   </select>
                   {form.category === '__custom__' && (
                     <input type="text" value={customCategory} onChange={e => setCustomCategory(e.target.value)}
                       placeholder="Type custom category"
-                      className="mt-2 w-full border border-orange-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+                      style={{ ...inp, marginTop: 8, borderColor: '#f97316' }} />
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Subcategory</label>
+                  <label style={lbl}>Subcategory</label>
                   <select value={form.subcategory} onChange={e => { setForm({...form, subcategory: e.target.value}); setCustomSubcategory(''); }}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-                    disabled={!form.category}>
-                    <option value="">-- Select Subcategory --</option>
+                    style={{ ...inp, opacity: !form.category ? 0.5 : 1 }} disabled={!form.category}>
+                    <option value="">-- Select --</option>
                     {(form.category !== '__custom__' ? (CATEGORY_MAP[form.category] || []) : []).map(s => <option key={s} value={s}>{s}</option>)}
                     <option value="__custom__">+ Custom...</option>
                   </select>
                   {form.subcategory === '__custom__' && (
                     <input type="text" value={customSubcategory} onChange={e => setCustomSubcategory(e.target.value)}
                       placeholder="Type custom subcategory"
-                      className="mt-2 w-full border border-orange-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+                      style={{ ...inp, marginTop: 8, borderColor: '#f97316' }} />
                   )}
                 </div>
               </div>
 
-              {/* Unit */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Unit + Stock */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Unit</label>
-                  <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+                  <label style={lbl}>Unit</label>
+                  <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} style={inp}>
                     {['piece', 'kg', 'gram', 'litre', 'ml', 'dozen', 'box', 'pack', 'bottle'].map(u => (
                       <option key={u} value={u}>{u}</option>
                     ))}
                   </select>
                 </div>
-                <div></div>
-              </div>
-
-              {/* Stock */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Stock Quantity</label>
-                <input type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})}
-                  placeholder="100"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-                  min="0" />
-                <p className="text-xs text-gray-400 mt-1">Set to 999 if you have unlimited stock</p>
-              </div>
-
-              {/* GST */}
-              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">HSN Code</label>
+                  <label style={lbl}>Stock Quantity</label>
+                  <input type="number" value={form.stock} onChange={e => setForm({...form, stock: e.target.value})}
+                    placeholder="100" style={inp} min="0" />
+                  <p style={{ margin: '4px 0 0', fontSize: 11, color: '#9ca3af' }}>Use 999 for unlimited</p>
+                </div>
+              </div>
+
+              {/* HSN + GST */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={lbl}>HSN Code</label>
                   <input value={form.hsnCode} onChange={e => setForm({...form, hsnCode: e.target.value})}
-                    placeholder="e.g. 0702"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+                    placeholder="e.g. 0702" style={inp} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">GST Rate (%)</label>
-                  <select value={form.gstRate} onChange={e => setForm({...form, gstRate: e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
-                    {['0', '5', '12', '18', '28'].map(r => (
-                      <option key={r} value={r}>{r}%</option>
-                    ))}
+                  <label style={lbl}>GST Rate (%)</label>
+                  <select value={form.gstRate} onChange={e => setForm({...form, gstRate: e.target.value})} style={inp}>
+                    {['0', '5', '12', '18', '28'].map(r => <option key={r} value={r}>{r}%</option>)}
                   </select>
                 </div>
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
                 <button type="button" onClick={() => setShowModal(false)}
-                  className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-medium hover:bg-gray-50">
+                  style={{ flex: 1, border: '1px solid #e5e7eb', background: '#fff', color: '#374151', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>
                   Cancel
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-1 bg-orange-500 text-white py-3 rounded-xl text-sm font-semibold hover:bg-orange-600 disabled:opacity-60">
+                  style={{ flex: 1, border: 'none', background: '#f97316', color: '#fff', borderRadius: 10, padding: '11px', fontSize: 14, fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
                   {saving ? 'Saving...' : editProduct ? 'Save Changes' : 'Add Product'}
                 </button>
               </div>
@@ -596,22 +579,22 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* "" STOCK UPDATE MODAL """"""""""""""""""""""""""" */}
+      {/* STOCK UPDATE MODAL */}
       {stockModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-xs p-6">
-            <h3 className="font-bold text-gray-900 mb-1">Update Stock</h3>
-            <p className="text-gray-400 text-sm mb-4">{stockModal.name}</p>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 320, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 16, color: '#111827' }}>Update Stock</h3>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: '#9ca3af' }}>{stockModal.name}</p>
             <input
               type="number" value={newStock} onChange={e => setNewStock(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-lg text-center font-bold focus:outline-none focus:ring-2 focus:ring-orange-200 mb-4"
+              style={{ width: '100%', border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px', fontSize: 20, textAlign: 'center', fontWeight: 700, outline: 'none', boxSizing: 'border-box', marginBottom: 16 }}
               min="0" autoFocus
             />
-            <div className="flex gap-3">
+            <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={() => setStockModal(null)}
-                className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm">Cancel</button>
+                style={{ flex: 1, border: '1px solid #e5e7eb', background: '#fff', color: '#374151', borderRadius: 10, padding: '10px', fontSize: 14, cursor: 'pointer' }}>Cancel</button>
               <button onClick={updateStock}
-                className="flex-1 bg-orange-500 text-white py-2.5 rounded-xl text-sm font-semibold">Update</button>
+                style={{ flex: 1, border: 'none', background: '#f97316', color: '#fff', borderRadius: 10, padding: '10px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>Update</button>
             </div>
           </div>
         </div>
