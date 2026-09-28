@@ -46,6 +46,8 @@ export default function ProductsPage() {
   const [newStock, setNewStock] = useState('');
   const [bulkUploading, setBulkUploading] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
+  const [customCategory, setCustomCategory] = useState('');
+  const [customSubcategory, setCustomSubcategory] = useState('');
   const fileRef = useRef();
   const bulkFileRef = useRef();
 
@@ -79,25 +81,33 @@ export default function ProductsPage() {
     setImageFile(null);
     setImagePreview('');
     setError('');
+    setCustomCategory('');
+    setCustomSubcategory('');
     setShowModal(true);
   };
 
   // Open edit modal
   const openEdit = (product) => {
     setEditProduct(product);
+    const cat = product.category || '';
+    const sub = product.subcategory || '';
+    const isCustomCat = cat && !ALL_CATEGORIES.includes(cat);
+    const isCustomSub = sub && cat && CATEGORY_MAP[cat] && !CATEGORY_MAP[cat].includes(sub);
     setForm({
       name: product.name || '',
       description: product.description || '',
       price: String(product.price || ''),
       mrp: String(product.mrp || ''),
-      category: product.category || '',
-      subcategory: product.subcategory || '',
+      category: isCustomCat ? '__custom__' : cat,
+      subcategory: isCustomSub ? '__custom__' : sub,
       unit: product.unit || 'piece',
       stock: String(product.stock ?? 100),
       hsnCode: product.hsnCode || '',
       gstRate: String(product.gstRate || '0'),
       isAvailable: product.isAvailable,
     });
+    setCustomCategory(isCustomCat ? cat : '');
+    setCustomSubcategory(isCustomSub ? sub : '');
     setImageFile(null);
     setImagePreview(product.image || '');
     setError('');
@@ -121,9 +131,16 @@ export default function ProductsPage() {
 
     setSaving(true);
     try {
+      // Resolve custom category/subcategory values before submit
+      const resolvedForm = {
+        ...form,
+        category: form.category === '__custom__' ? customCategory.trim() : form.category,
+        subcategory: form.subcategory === '__custom__' ? customSubcategory.trim() : form.subcategory,
+      };
+
       // Use FormData to support image upload
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      Object.entries(resolvedForm).forEach(([k, v]) => fd.append(k, v));
       if (imageFile) fd.append('image', imageFile);
 
       const url = editProduct ? `${API}/products/${editProduct._id}` : `${API}/products`;
@@ -464,20 +481,32 @@ export default function ProductsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-                  <select value={form.category} onChange={e => setForm({...form, category: e.target.value, subcategory: ''})}
+                  <select value={form.category} onChange={e => { setForm({...form, category: e.target.value, subcategory: ''}); setCustomCategory(''); setCustomSubcategory(''); }}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
                     <option value="">-- Select Category --</option>
                     {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    <option value="__custom__">+ Custom...</option>
                   </select>
+                  {form.category === '__custom__' && (
+                    <input type="text" value={customCategory} onChange={e => setCustomCategory(e.target.value)}
+                      placeholder="Type custom category"
+                      className="mt-2 w-full border border-orange-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Subcategory</label>
-                  <select value={form.subcategory} onChange={e => setForm({...form, subcategory: e.target.value})}
+                  <select value={form.subcategory} onChange={e => { setForm({...form, subcategory: e.target.value}); setCustomSubcategory(''); }}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-                    disabled={!form.category || !CATEGORY_MAP[form.category]}>
+                    disabled={!form.category}>
                     <option value="">-- Select Subcategory --</option>
-                    {(CATEGORY_MAP[form.category] || []).map(s => <option key={s} value={s}>{s}</option>)}
+                    {(form.category !== '__custom__' ? (CATEGORY_MAP[form.category] || []) : []).map(s => <option key={s} value={s}>{s}</option>)}
+                    <option value="__custom__">+ Custom...</option>
                   </select>
+                  {form.subcategory === '__custom__' && (
+                    <input type="text" value={customSubcategory} onChange={e => setCustomSubcategory(e.target.value)}
+                      placeholder="Type custom subcategory"
+                      className="mt-2 w-full border border-orange-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+                  )}
                 </div>
               </div>
 
