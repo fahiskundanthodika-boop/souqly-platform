@@ -95,14 +95,15 @@ export default function WhatsAppBotPage() {
 
     window.FB.login((response) => {
       clearTimeout(timeout);
-      if (response.authResponse?.code) {
+      const code = response.authResponse?.code;
+      if (code) {
         (async () => {
           try {
             const token = localStorage.getItem('ownerToken');
             const res = await fetch(`${API_URL}/wa-connect/embedded-signup`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ code: response.authResponse.code }),
+              body: JSON.stringify({ code }),
             });
             const d = await res.json();
             if (d.success) {
@@ -124,11 +125,19 @@ export default function WhatsAppBotPage() {
         }
         setShowManual(true);
       }
-    }, {
-      scope: 'whatsapp_business_management,whatsapp_business_messaging',
-      response_type: 'code',
-      override_default_response_type: true,
-    });
+    }, process.env.NEXT_PUBLIC_META_CONFIG_ID
+      ? {
+          config_id: process.env.NEXT_PUBLIC_META_CONFIG_ID,
+          response_type: 'code',
+          override_default_response_type: true,
+          extras: { sessionInfoVersion: '3' },
+        }
+      : {
+          scope: 'whatsapp_business_management,whatsapp_business_messaging',
+          response_type: 'code',
+          override_default_response_type: true,
+        }
+    );
   };
 
   const connectWhatsApp = async (e) => {
@@ -370,7 +379,7 @@ export default function WhatsAppBotPage() {
                   <>Add <strong>WhatsApp</strong> product → API Setup → copy your <strong>Phone Number ID</strong></>,
                   <>Go to <strong>Business Settings → System Users → Add → Admin</strong> → Generate Token → select your app → copy token</>,
                   <>Paste both above and click Connect. Souqly verifies them instantly.</>,
-                  <>In your Meta App → Webhook → set URL to: <code style={{ background: '#1a1a2e', padding: '2px 6px', borderRadius: 4, fontSize: 11, color: '#93c5fd' }}>https://yes-production-4a9f.up.railway.app/api/webhook/whatsapp</code> with token <code style={{ background: '#1a1a2e', padding: '2px 6px', borderRadius: 4, fontSize: 11, color: '#93c5fd' }}>souqly_webhook_2024</code></>,
+                  <>In your Meta App → Webhook → set URL to: <code style={{ background: '#1a1a2e', padding: '2px 6px', borderRadius: 4, fontSize: 11, color: '#93c5fd' }}>https://yes-production-4a9f.up.railway.app/api/webhook/whatsapp</code> with verify token <code style={{ background: '#1a1a2e', padding: '2px 6px', borderRadius: 4, fontSize: 11, color: '#93c5fd' }}>souqly_verify_2025</code></>,
                 ].map((text, i) => (
                   <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                     <span style={{ width: 22, height: 22, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#60a5fa', flexShrink: 0, marginTop: 1 }}>{i + 1}</span>

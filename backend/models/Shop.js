@@ -94,6 +94,7 @@ const ShopSchema = new mongoose.Schema({
   // WhatsApp Business API (each shop's own number)
   whatsappApi: {
     phoneNumberId:  { type: String, default: '' }, // Meta Phone Number ID
+    wabaId:         { type: String, default: '' }, // WhatsApp Business Account ID
     accessToken:    { type: String, default: '' }, // Meta Permanent Access Token
     businessNumber: { type: String, default: '' }, // Display number e.g. +91 98765 43210
     connected:      { type: Boolean, default: false },
