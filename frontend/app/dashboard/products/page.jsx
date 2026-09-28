@@ -56,7 +56,10 @@ export default function ProductsPage() {
     try {
       const params = new URLSearchParams();
       if (search) params.set('search', search);
-      if (activeCategory !== 'all') params.set('category', activeCategory);
+      // Only pass category filter for actual category tabs (not status tabs)
+      if (activeCategory !== 'all' && activeCategory !== 'Active' && activeCategory !== 'Hidden') {
+        params.set('category', activeCategory);
+      }
 
       const token = localStorage.getItem('ownerToken');
       const res = await fetch(`${API}/products?${params}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -71,6 +74,13 @@ export default function ProductsPage() {
       setLoading(false);
     }
   };
+
+  // Client-side filter for Active/Hidden status tabs
+  const displayedProducts = activeCategory === 'Active'
+    ? products.filter(p => p.isAvailable)
+    : activeCategory === 'Hidden'
+    ? products.filter(p => !p.isAvailable)
+    : products;
 
   useEffect(() => { fetchProducts(); }, [search, activeCategory]);
 
@@ -272,125 +282,141 @@ export default function ProductsPage() {
 
         {/* Bulk upload result */}
         {bulkResult && (
-          <div className={`mx-6 mt-4 p-3 rounded-xl text-sm ${bulkResult.success ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'}`}>
-            {bulkResult.success
-              ? `✅ ${bulkResult.message} ${bulkResult.skipped ? `(${bulkResult.skipped} rows skipped)` : ''}`
-              : `❌ ${bulkResult.message}`}
-            <button onClick={() => setBulkResult(null)} className="ml-3 text-gray-400 hover:text-gray-600">✕</button>
+          <div style={{ margin: '12px 24px 0', padding: '10px 14px', borderRadius: 10, fontSize: 13,
+            background: bulkResult.success ? '#f0fdf4' : '#fef2f2',
+            border: `1px solid ${bulkResult.success ? '#bbf7d0' : '#fecaca'}`,
+            color: bulkResult.success ? '#166534' : '#991b1b', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>{bulkResult.success ? `✅ ${bulkResult.message}${bulkResult.skipped ? ` (${bulkResult.skipped} rows skipped)` : ''}` : `❌ ${bulkResult.message}`}</span>
+            <button onClick={() => setBulkResult(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 16 }}>✕</button>
           </div>
         )}
 
-        <div className="p-6">
-
-          {/* Search + Category filters */}
-          <div className="mb-5 space-y-3">
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder=" Search products by name..."
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
-            />
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {['all', ...categories].map(cat => (
-                <button key={cat} onClick={() => setActiveCategory(cat)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                    activeCategory === cat
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300'
-                  }`}>
-                  {cat === 'all' ? 'All Products' : cat}
-                </button>
-              ))}
-            </div>
+        {/* Tab bar + Search */}
+        <div style={{ background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 24px' }}>
+          {/* Status tabs */}
+          <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid #e5e7eb' }}>
+            {['All', 'Active', 'Hidden'].map(tab => (
+              <button key={tab} onClick={() => setActiveCategory(tab === 'All' ? 'all' : tab)}
+                style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, border: 'none', background: 'none', cursor: 'pointer',
+                  borderBottom: (tab === 'All' ? activeCategory === 'all' : activeCategory === tab) ? '2px solid #111827' : '2px solid transparent',
+                  color: (tab === 'All' ? activeCategory === 'all' : activeCategory === tab) ? '#111827' : '#6b7280' }}>
+                {tab}
+              </button>
+            ))}
+            {categories.filter(c => c !== 'Hidden').slice(0, 5).map(cat => (
+              <button key={cat} onClick={() => setActiveCategory(cat)}
+                style={{ padding: '12px 16px', fontSize: 13, fontWeight: 500, border: 'none', background: 'none', cursor: 'pointer',
+                  borderBottom: activeCategory === cat ? '2px solid #111827' : '2px solid transparent',
+                  color: activeCategory === cat ? '#111827' : '#6b7280', whiteSpace: 'nowrap' }}>
+                {cat}
+              </button>
+            ))}
           </div>
 
-          {/* Products Grid */}
+          {/* Search row */}
+          <div style={{ padding: '10px 0', display: 'flex', gap: 8 }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af', fontSize: 14 }}>🔍</span>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products"
+                style={{ width: '100%', border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 12px 8px 34px',
+                  fontSize: 13, outline: 'none', boxSizing: 'border-box', color: '#111827' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 24px' }}>
           {loading ? (
-            <div className="text-center py-16 text-gray-400">
-              <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <div style={{ textAlign: 'center', padding: '64px 0', color: '#9ca3af' }}>
+              <div style={{ width: 32, height: 32, border: '3px solid #f97316', borderTop: '3px solid transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }}></div>
               Loading products...
             </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4"></div>
-              <h3 className="font-bold text-gray-900 mb-2">No products yet</h3>
-              <p className="text-gray-400 text-sm mb-6">Add your first product to start selling</p>
-              <button onClick={openAdd} className="bg-orange-500 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-orange-600">
-                + Add First Product
+          ) : displayedProducts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '80px 0' }}>
+              <div style={{ fontSize: 52, marginBottom: 12 }}>📦</div>
+              <div style={{ fontWeight: 700, fontSize: 16, color: '#111827', marginBottom: 6 }}>No products yet</div>
+              <div style={{ color: '#9ca3af', fontSize: 13, marginBottom: 20 }}>Add your first product to start selling</div>
+              <button onClick={openAdd} style={{ background: '#111827', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}>
+                Add product
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {products.map(product => (
-                <div key={product._id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
-
-                  {/* Image */}
-                  <div className="relative bg-gray-50 h-36 flex items-center justify-center">
-                    {product.image
-                      ? <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                      : <span className="text-4xl"></span>
-                    }
-                    {/* Low stock badge */}
-                    {isLowStock(product) && (
-                      <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
-                        Low Stock
-                      </span>
-                    )}
-                    {/* Hidden badge */}
-                    {!product.isAvailable && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <span className="text-white text-xs font-bold bg-black/60 px-2 py-1 rounded-lg">HIDDEN</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-3">
-                    <h3 className="font-semibold text-gray-900 text-sm truncate">{product.name}</h3>
-                    <p className="text-gray-400 text-xs truncate">{product.category || 'No category'}</p>
-
-                    {/* Price */}
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="font-bold text-orange-500 text-sm">{product.price}</span>
-                      {product.mrp && product.mrp > product.price && (
-                        <span className="text-gray-400 line-through text-xs">{product.mrp}</span>
-                      )}
-                    </div>
-
-                    {/* Stock */}
-                    <button
-                      onClick={() => { setStockModal(product); setNewStock(String(product.stock)); }}
-                      className={`text-xs mt-1 px-2 py-0.5 rounded-full ${
-                        isLowStock(product) ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-500'
-                      } hover:bg-orange-50 hover:text-orange-600 transition-colors`}>
-                      Stock: {product.stock} {product.unit}
-                    </button>
-
-                    {/* Toggle + Edit + Delete */}
-                    <div className="flex items-center gap-1 mt-3">
-                      {/* Available toggle */}
-                      <button
-                        onClick={() => toggleAvailable(product)}
-                        title={product.isAvailable ? 'Click to hide' : 'Click to show'}
-                        className={`flex-1 text-xs py-1.5 rounded-lg font-medium transition-colors ${
-                          product.isAvailable
-                            ? 'bg-green-50 text-green-600 hover:bg-green-100'
-                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                        }`}>
-                        {product.isAvailable ? '" Live' : ' Hidden'}
-                      </button>
-                      <button onClick={() => openEdit(product)}
-                        className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors" title="Edit">
-                        
-                      </button>
-                      <button onClick={() => deleteProduct(product)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors" title="Delete">
-                        
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', marginTop: 16 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+                    <th style={{ width: 40, padding: '10px 12px' }}>
+                      <input type="checkbox" style={{ cursor: 'pointer' }} />
+                    </th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: 12 }}>Product</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: 12 }}>Status</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: 12 }}>Inventory</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: 12 }}>Price</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: 12 }}>Category</th>
+                    <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#374151', fontSize: 12 }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedProducts.map((product, i) => (
+                    <tr key={product._id} style={{ borderBottom: i < displayedProducts.length - 1 ? '1px solid #f3f4f6' : 'none', background: '#fff' }}
+                      onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                      onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+                      <td style={{ padding: '12px 12px', textAlign: 'center' }}>
+                        <input type="checkbox" style={{ cursor: 'pointer' }} />
+                      </td>
+                      <td style={{ padding: '12px 12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{ width: 48, height: 48, borderRadius: 8, overflow: 'hidden', background: '#f3f4f6', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {product.image
+                              ? <img src={product.image} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              : <span style={{ fontSize: 22 }}>📦</span>
+                            }
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 500, color: '#111827' }}>{product.name}</div>
+                            {product.subcategory && <div style={{ fontSize: 12, color: '#9ca3af' }}>{product.subcategory}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{ padding: '12px 12px' }}>
+                        <button onClick={() => toggleAvailable(product)}
+                          style={{ padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer',
+                            background: product.isAvailable ? '#dcfce7' : '#f3f4f6',
+                            color: product.isAvailable ? '#16a34a' : '#6b7280' }}>
+                          {product.isAvailable ? 'Active' : 'Hidden'}
+                        </button>
+                      </td>
+                      <td style={{ padding: '12px 12px' }}>
+                        <button onClick={() => { setStockModal(product); setNewStock(String(product.stock)); }}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                            color: isLowStock(product) ? '#dc2626' : '#374151', fontWeight: isLowStock(product) ? 600 : 400 }}>
+                          {product.stock} {product.unit}
+                          {isLowStock(product) && <span style={{ fontSize: 11, marginLeft: 4, color: '#dc2626' }}>⚠ Low</span>}
+                        </button>
+                      </td>
+                      <td style={{ padding: '12px 12px' }}>
+                        <div style={{ fontWeight: 500, color: '#111827' }}>₹{product.price}</div>
+                        {product.mrp && product.mrp > product.price && (
+                          <div style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>₹{product.mrp}</div>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 12px', color: '#6b7280' }}>{product.category || '—'}</td>
+                      <td style={{ padding: '12px 12px' }}>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => openEdit(product)}
+                            style={{ padding: '5px 12px', background: '#f3f4f6', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer', color: '#374151' }}>
+                            Edit
+                          </button>
+                          <button onClick={() => deleteProduct(product)}
+                            style={{ padding: '5px 10px', background: '#fef2f2', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', color: '#dc2626' }}>
+                            🗑
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
