@@ -5,6 +5,23 @@ import Sidebar from '../../../components/Sidebar';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+const CATEGORY_MAP = {
+  'Vegetables': ['Leafy Greens', 'Root Vegetables', 'Gourds & Squash', 'Exotic Vegetables', 'Other'],
+  'Fruits': ['Citrus', 'Tropical', 'Berries', 'Seasonal', 'Dry Fruits', 'Other'],
+  'Dairy & Eggs': ['Milk', 'Curd & Paneer', 'Butter & Cheese', 'Eggs', 'Other'],
+  'Meat & Seafood': ['Chicken', 'Mutton', 'Fish', 'Prawns & Seafood', 'Other'],
+  'Staples & Grains': ['Rice', 'Wheat & Flour', 'Pulses & Lentils', 'Oils & Ghee', 'Sugar & Salt', 'Other'],
+  'Snacks': ['Chips & Crisps', 'Biscuits & Cookies', 'Namkeen', 'Chocolates', 'Other'],
+  'Beverages': ['Juices', 'Cold Drinks', 'Tea & Coffee', 'Water & Health Drinks', 'Other'],
+  'Bakery': ['Bread & Buns', 'Cakes & Pastries', 'Rusk & Toast', 'Other'],
+  'Frozen Foods': ['Frozen Vegetables', 'Ice Cream', 'Ready to Cook', 'Other'],
+  'Personal Care': ['Skin Care', 'Hair Care', 'Oral Care', 'Other'],
+  'Household': ['Cleaning', 'Laundry', 'Kitchen Essentials', 'Other'],
+  'Baby & Kids': ['Baby Food', 'Diapers', 'Toys', 'Other'],
+  'Other': ['General', 'Other'],
+};
+const ALL_CATEGORIES = Object.keys(CATEGORY_MAP);
+
 // Empty form template
 const emptyForm = {
   name: '', description: '', price: '', mrp: '',
@@ -447,15 +464,20 @@ export default function ProductsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-                  <input value={form.category} onChange={e => setForm({...form, category: e.target.value})}
-                    placeholder="e.g. Vegetables, Drinks"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+                  <select value={form.category} onChange={e => setForm({...form, category: e.target.value, subcategory: ''})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400">
+                    <option value="">-- Select Category --</option>
+                    {ALL_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Subcategory</label>
-                  <input value={form.subcategory} onChange={e => setForm({...form, subcategory: e.target.value})}
-                    placeholder="e.g. Leafy Greens, Juices"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+                  <select value={form.subcategory} onChange={e => setForm({...form, subcategory: e.target.value})}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
+                    disabled={!form.category || !CATEGORY_MAP[form.category]}>
+                    <option value="">-- Select Subcategory --</option>
+                    {(CATEGORY_MAP[form.category] || []).map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
                 </div>
               </div>
 
