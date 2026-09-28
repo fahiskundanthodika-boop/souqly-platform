@@ -259,6 +259,43 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      {/* GST Report Section */}
+      <div style={{ background: '#fff', border: '2px solid #fde68a', borderRadius: 14, padding: 20, marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 22 }}>🧾</span>
+              <span style={{ fontWeight: 700, fontSize: 16, color: '#111827' }}>GST Sales Report</span>
+              <span style={{ background: '#fef9c3', color: '#854d0e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>GSTR-1 Style</span>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: '#6b7280', maxWidth: 520 }}>
+              Export for the selected date range. Contains <strong>Section 1</strong> — invoice-wise B2C details (Order No, Customer, Taxable Value, CGST, SGST, IGST) and <strong>Section 2</strong> — HSN-wise tax summary with totals. Open in Excel for GST filing.
+            </p>
+          </div>
+          <button onClick={() => download('gst')} disabled={downloading === 'gst'}
+            style={{ padding: '10px 22px', border: 'none', borderRadius: 10,
+              background: downloading === 'gst' ? '#f3f4f6' : '#f97316',
+              color: downloading === 'gst' ? '#9ca3af' : '#fff',
+              fontWeight: 700, fontSize: 14, cursor: downloading === 'gst' ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            {downloading === 'gst' ? '⏳ Downloading...' : '⬇ Download GST CSV'}
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 14 }}>
+          {[
+            { label: 'Section 1 — Invoice List', desc: 'Order No · Customer · Taxable · CGST · SGST · IGST · Total', icon: '📄' },
+            { label: 'Section 2 — HSN Summary', desc: 'HSN Code · GST Rate · Taxable Value · CGST · SGST · IGST', icon: '📊' },
+            { label: 'Totals Row', desc: 'Total orders · Total GST · Gross Sales for the period', icon: '🧮' },
+          ].map(t => (
+            <div key={t.label} style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 8, padding: '10px 12px' }}>
+              <div style={{ fontSize: 18, marginBottom: 4 }}>{t.icon}</div>
+              <div style={{ fontWeight: 600, fontSize: 12, color: '#92400e', marginBottom: 2 }}>{t.label}</div>
+              <div style={{ fontSize: 11, color: '#a16207', lineHeight: 1.4 }}>{t.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
     </div></div>
   );
 }

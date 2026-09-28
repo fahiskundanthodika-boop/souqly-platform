@@ -168,6 +168,127 @@ router.get('/products.csv', protect, async (req, res) => {
   }
 });
 
+// GET /api/reports/gst.csv - GSTR-1 style GST sales report
+router.get('/gst.csv', protect, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    const { start, end } = dateRange(from, to);
+    const shopId = req.shop._id;
+
+    const orders = await Order.find({
+      shopId,
+      createdAt: { $gte: start, $lte: end },
+      orderStatus: { $ne: 'cancelled' }
+    }).sort({ createdAt: 1 });
+
+    // Build per-invoice rows (B2C supply summary for GSTR-1)
+    const invoiceRows = orders.map(o => {
+      const taxable = o.subtotal || 0;
+      const gstAmt = o.items.reduce((sum, i) => {
+        const rate = i.gstRate || 0;
+        return sum + ((i.total || 0) * rate / (100 + rate));
+      }, 0);
+      const cgst = gstAmt / 2;
+      const sgst = gstAmt / 2;
+      return {
+        date: fmtDate(o.createdAt),
+        orderId: o.orderId,
+        customer: o.customerName,
+        phone: o.customerPhone,
+        taxableValue: taxable.toFixed(2),
+        cgst: cgst.toFixed(2),
+        sgst: sgst.toFixed(2),
+        igst: (0).toFixed(2),
+        totalGST: gstAmt.toFixed(2),
+        total: (o.total || 0).toFixed(2),
+        paymentMethod: o.paymentMethod,
+      };
+    });
+
+    // HSN-wise summary
+    const hsnMap = {};
+    orders.forEach(o => {
+      o.items.forEach(item => {
+        const hsn = item.hsnCode || 'UNCLASSIFIED';
+        const rate = item.gstRate || 0;
+        const key = `${hsn}_${rate}`;
+        const taxable = (item.total || 0) * 100 / (100 + rate);
+        const gstAmt = (item.total || 0) * rate / (100 + rate);
+        if (!hsnMap[key]) hsnMap[key] = { hsn, rate, description: item.name, taxable: 0, cgst: 0, sgst: 0, igst: 0, total: 0 };
+        hsnMap[key].taxable += taxable;
+        hsnMap[key].cgst += gstAmt / 2;
+        hsnMap[key].sgst += gstAmt / 2;
+        hsnMap[key].total += item.total || 0;
+      });
+    });
+    const hsnRows = Object.values(hsnMap).map(h => ({
+      hsn: h.hsn,
+      description: h.description,
+      rate: `${h.rate}%`,
+      taxableValue: h.taxable.toFixed(2),
+      cgst: h.cgst.toFixed(2),
+      sgst: h.sgst.toFixed(2),
+      igst: h.igst.toFixed(2),
+      totalGST: (h.cgst + h.sgst).toFixed(2),
+      grossTotal: h.total.toFixed(2),
+    }));
+
+    // Totals
+    const totals = invoiceRows.reduce((acc, r) => {
+      acc.taxable += parseFloat(r.taxableValue);
+      acc.cgst += parseFloat(r.cgst);
+      acc.sgst += parseFloat(r.sgst);
+      acc.gst += parseFloat(r.totalGST);
+      acc.total += parseFloat(r.total);
+      return acc;
+    }, { taxable: 0, cgst: 0, sgst: 0, gst: 0, total: 0 });
+
+    // Build CSV with two sections
+    const invoiceCols = [
+      { label: 'Date', key: 'date' }, { label: 'Order No', key: 'orderId' },
+      { label: 'Customer', key: 'customer' }, { label: 'Phone', key: 'phone' },
+      { label: 'Taxable Value (₹)', key: 'taxableValue' },
+      { label: 'CGST (₹)', key: 'cgst' }, { label: 'SGST (₹)', key: 'sgst' },
+      { label: 'IGST (₹)', key: 'igst' }, { label: 'Total GST (₹)', key: 'totalGST' },
+      { label: 'Invoice Total (₹)', key: 'total' }, { label: 'Payment', key: 'paymentMethod' },
+    ];
+    const hsnCols = [
+      { label: 'HSN Code', key: 'hsn' }, { label: 'Description', key: 'description' },
+      { label: 'GST Rate', key: 'rate' },
+      { label: 'Taxable Value (₹)', key: 'taxableValue' },
+      { label: 'CGST (₹)', key: 'cgst' }, { label: 'SGST (₹)', key: 'sgst' },
+      { label: 'IGST (₹)', key: 'igst' }, { label: 'Total GST (₹)', key: 'totalGST' },
+      { label: 'Gross Total (₹)', key: 'grossTotal' },
+    ];
+
+    const csvParts = [
+      `"GST SALES REPORT (GSTR-1 Style)"`,
+      `"Period: ${fmtDate(start)} to ${fmtDate(end)}"`,
+      `"Generated: ${fmtDate(new Date())}"`,
+      ``,
+      `"=== SECTION 1: INVOICE-WISE DETAILS (B2C) ==="`,
+      toCSV(invoiceRows, invoiceCols),
+      ``,
+      `"=== SECTION 2: HSN-WISE SUMMARY ==="`,
+      toCSV(hsnRows, hsnCols),
+      ``,
+      `"=== TOTALS ==="`,
+      `"Total Orders","${orders.length}"`,
+      `"Total Taxable Value (₹)","${totals.taxable.toFixed(2)}"`,
+      `"Total CGST (₹)","${totals.cgst.toFixed(2)}"`,
+      `"Total SGST (₹)","${totals.sgst.toFixed(2)}"`,
+      `"Total GST Collected (₹)","${totals.gst.toFixed(2)}"`,
+      `"Gross Sales (₹)","${totals.total.toFixed(2)}"`,
+    ];
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="GST-Report-${from || 'all'}-to-${to || 'today'}.csv"`);
+    res.send(csvParts.join('\r\n'));
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // GET /api/reports/summary - JSON summary for the reports page
 router.get('/summary', protect, async (req, res) => {
   try {
